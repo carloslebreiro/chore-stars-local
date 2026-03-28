@@ -76,6 +76,8 @@ const T = {
     lockedOut:(t)=>`Too many failed attempts. Try again in ${t}.`,
     attemptsLeft:(n)=>`${n} attempt${n===1?"":"s"} remaining before lockout.`,
     kidProfileTitle:"My Profile", kidNameLabel:"Your name", kidEmojiLabel:"Profile emoji", kidProfileSaved:"Profile saved!",
+    pastDaysLimit:"Max days back", pastDaysLimitHint:"Max number of days in the past a child can select (0 = unlimited)",
+    pastDaysLimitSaved:"Setting saved!",
   },
   pt: {
     appTitle:"Estrelas das Tarefas", kidTab:"Criança", adminTab:"Admin",
@@ -151,6 +153,8 @@ const T = {
     lockedOut:(t)=>`Demasiadas tentativas falhadas. Tenta novamente em ${t}.`,
     attemptsLeft:(n)=>`${n} tentativa${n===1?"":"s"} restante${n===1?"":"s"} antes do bloqueio.`,
     kidProfileTitle:"O Meu Perfil", kidNameLabel:"O teu nome", kidEmojiLabel:"Emoji de perfil", kidProfileSaved:"Perfil guardado!",
+    pastDaysLimit:"Máx. dias no passado", pastDaysLimitHint:"Número máximo de dias no passado que a criança pode selecionar (0 = sem limite)",
+    pastDaysLimitSaved:"Definição guardada!",
   },
 };
 
@@ -181,7 +185,7 @@ const DEF = {
     {id:1,name:{en:"Weekly Champion",pt:"Campeão Semanal"},type:"weekly",stars:15,bonus:5,threshold:70,claims:[]},
     {id:2,name:{en:"Monthly Star",pt:"Estrela do Mês"},type:"monthly",stars:50,bonus:20,threshold:60,claims:[]},
   ],
-  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",
+  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",pastDaysLimit:0,
 };
 
 function loadData() {
@@ -279,6 +283,7 @@ function makeApi(data, setData) {
     verifyKidPin: pin => Promise.resolve(pin===(data.kidPin||"0000")),
     setKidPin: pin => { commit({...data,kidPin:pin}); return Promise.resolve(); },
     setKidProfile: ({name,emoji}) => { commit({...data,kidName:name,kidEmoji:emoji}); return Promise.resolve(); },
+    setPastDaysLimit: n => { commit({...data,pastDaysLimit:n}); return Promise.resolve(); },
   };
 }
 
@@ -344,9 +349,10 @@ function DateInput({value,onChange,max,style}) {
 }
 
 // ── MiniCalendar ───────────────────────────────────────────────────────────
-function MiniCalendar({value,onChange,max}) {
+function MiniCalendar({value,onChange,max,min}) {
   const t = useLang();
   const maxD = max||todayStr();
+  const minD = min||null;
   const init = value ? new Date(value+"T12:00:00") : new Date();
   const [vy,setVy] = useState(init.getFullYear());
   const [vm,setVm] = useState(init.getMonth());
@@ -357,10 +363,11 @@ function MiniCalendar({value,onChange,max}) {
   const goM = delta => { let m=vm+delta,y=vy; if(m<0){m=11;y--;} if(m>11){m=0;y++;} setVm(m);setVy(y); };
   const iso = d => `${vy}-${String(vm+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
   const canNext = () => new Date(vy,vm+1,1) <= new Date(maxD+"T12:00:00");
+  const canPrev = () => !minD || new Date(vy,vm,1) > new Date(minD+"T12:00:00");
   return (
     <div style={{background:"#fff",borderRadius:14,border:"1.5px solid #e2e8f0",padding:"12px 14px",userSelect:"none"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-        <button onClick={()=>goM(-1)} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,padding:"2px 8px",borderRadius:8,color:"#6366f1",lineHeight:1}}>‹</button>
+        <button onClick={()=>goM(-1)} disabled={!canPrev()} style={{background:"none",border:"none",cursor:canPrev()?"pointer":"default",fontSize:18,padding:"2px 8px",borderRadius:8,color:canPrev()?"#6366f1":"#d1d5db",lineHeight:1}}>‹</button>
         <span style={{fontWeight:700,fontSize:14,color:"#374151"}}>{t.monthNames[vm]} {vy}</span>
         <button onClick={()=>goM(1)} disabled={!canNext()} style={{background:"none",border:"none",cursor:canNext()?"pointer":"default",fontSize:18,padding:"2px 8px",borderRadius:8,color:canNext()?"#6366f1":"#d1d5db",lineHeight:1}}>›</button>
       </div>
@@ -369,7 +376,7 @@ function MiniCalendar({value,onChange,max}) {
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
         {cells.map((d,i)=>{
-          const sel=d&&iso(d)===value, dis=d&&iso(d)>maxD, tod=d&&iso(d)===todayStr();
+          const sel=d&&iso(d)===value, dis=d&&(iso(d)>maxD||(minD&&iso(d)<minD)), tod=d&&iso(d)===todayStr();
           return (
             <div key={i} onClick={()=>d&&!dis&&onChange(iso(d))} style={{textAlign:"center",padding:"6px 2px",borderRadius:8,fontSize:13,fontWeight:sel||tod?700:400,cursor:d&&!dis?"pointer":"default",background:sel?"#6366f1":tod?"#eef2ff":"transparent",color:sel?"#fff":dis?"#d1d5db":tod?"#6366f1":"#374151",border:tod&&!sel?"1.5px solid #6366f1":"1.5px solid transparent"}}>
               {d||""}
@@ -549,9 +556,10 @@ function RewardModal({reward,totalStars,t,onConfirm,onClose}) {
 // ── KidPanel ───────────────────────────────────────────────────────────────
 function KidPanel({data,api,refresh}) {
   const t=useLang(); const lang=useContext(LangCtx);
-  const {chores,rewards,submissions,redemptions,penaltyLog=[],totalStars,goals}=data;
+  const {chores,rewards,submissions,redemptions,penaltyLog=[],totalStars,goals,pastDaysLimit=0}=data;
+  const minSubmitDate = pastDaysLimit>0 ? (()=>{const d=new Date();d.setDate(d.getDate()-pastDaysLimit);return d.toISOString().split("T")[0];})() : null;
   const [tabK,setTabK]=useState("chores");
-  const [selDate,setSelDate]=useState(todayStr());
+  const [selDate,setSelDate]=useState(()=>{const td=todayStr();return(minSubmitDate&&td<minSubmitDate)?minSubmitDate:td;});
   const [choreTarget,setChoreTarget]=useState(null);
   const [redeemTarget,setRedeemTarget]=useState(null);
   const [flash,setFlash]=useState(null);
@@ -628,7 +636,7 @@ function KidPanel({data,api,refresh}) {
                 {t.weekdays.map((l,d)=>(<span key={d} style={{padding:"3px 8px",borderRadius:20,fontSize:11,fontWeight:600,background:d===selWd?"#6366f1":"#f1f5f9",color:d===selWd?"#fff":"#9ca3af",border:`1px solid ${d===selWd?"#6366f1":"#e2e8f0"}`}}>{l.slice(0,2)}</span>))}
               </div>
             </div>
-            <MiniCalendar value={selDate} onChange={setSelDate} max={todayStr()}/>
+            <MiniCalendar value={selDate} onChange={setSelDate} max={todayStr()} min={minSubmitDate}/>
           </div>
         </div>
       )}
@@ -1041,7 +1049,7 @@ function AdminPanel({data,api,refresh,onLock}) {
       {tabA==="penalties"&&<AdminPenalties data={data} api={api} refresh={refresh}/>}
       {tabA==="goals"&&<AdminGoals data={data} api={api} refresh={refresh}/>}
       {tabA==="graph"&&<StarsGraph data={data}/>}
-      {tabA==="settings"&&<AdminSettings api={api} refresh={refresh}/>}
+      {tabA==="settings"&&<AdminSettings data={data} api={api} refresh={refresh}/>}
     </div>
   );
 }
@@ -1234,10 +1242,11 @@ function KidProfileModal({kidName,kidEmoji,api,refresh,onClose}) {
 }
 
 // ── AdminSettings ──────────────────────────────────────────────────────────
-function AdminSettings({api,refresh}) {
+function AdminSettings({data,api,refresh}) {
   const t=useLang();
   const [newPin,setNewPin]=useState("");
   const [flash,setFlash]=useState(null);
+  const [pastDays,setPastDays]=useState(()=>data.pastDaysLimit??0);
   const savePin=async()=>{
     if(!/^\d{4}$/.test(newPin))return;
     await api.setKidPin(newPin);
@@ -1246,14 +1255,30 @@ function AdminSettings({api,refresh}) {
     setTimeout(()=>setFlash(null),2000);
     refresh();
   };
+  const savePastDays=async()=>{
+    await api.setPastDaysLimit(pastDays);
+    setFlash(t.pastDaysLimitSaved);
+    setTimeout(()=>setFlash(null),2000);
+    refresh();
+  };
   return (
-    <div style={card}>
-      <h3 style={{margin:"0 0 8px"}}>{t.setKidPin}</h3>
-      <p style={{margin:"0 0 14px",fontSize:13,color:"#6b7280"}}>{t.kidPinLabel}</p>
-      {flash&&<div style={{background:"#10b981",color:"#fff",borderRadius:8,padding:"8px 12px",marginBottom:12,fontWeight:600,fontSize:13}}>{flash}</div>}
-      <div style={{display:"flex",gap:8}}>
-        <input type="password" inputMode="numeric" maxLength={4} value={newPin} onChange={e=>setNewPin(e.target.value.replace(/\D/g,""))} placeholder="••••" style={{...inp,letterSpacing:10,fontSize:22,textAlign:"center"}}/>
-        <button style={btn()} onClick={savePin} disabled={!/^\d{4}$/.test(newPin)}>{t.saveKidPin}</button>
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={card}>
+        <h3 style={{margin:"0 0 8px"}}>{t.setKidPin}</h3>
+        <p style={{margin:"0 0 14px",fontSize:13,color:"#6b7280"}}>{t.kidPinLabel}</p>
+        {flash&&<div style={{background:"#10b981",color:"#fff",borderRadius:8,padding:"8px 12px",marginBottom:12,fontWeight:600,fontSize:13}}>{flash}</div>}
+        <div style={{display:"flex",gap:8}}>
+          <input type="password" inputMode="numeric" maxLength={4} value={newPin} onChange={e=>setNewPin(e.target.value.replace(/\D/g,""))} placeholder="••••" style={{...inp,letterSpacing:10,fontSize:22,textAlign:"center"}}/>
+          <button style={btn()} onClick={savePin} disabled={!/^\d{4}$/.test(newPin)}>{t.saveKidPin}</button>
+        </div>
+      </div>
+      <div style={card}>
+        <h3 style={{margin:"0 0 4px"}}>{t.pastDaysLimit}</h3>
+        <p style={{margin:"0 0 14px",fontSize:13,color:"#6b7280"}}>{t.pastDaysLimitHint}</p>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="number" min={0} max={365} value={pastDays} onChange={e=>setPastDays(Math.max(0,parseInt(e.target.value)||0))} style={{...inp,width:80}}/>
+          <button style={btn()} onClick={savePastDays}>{t.saveChore}</button>
+        </div>
       </div>
     </div>
   );
