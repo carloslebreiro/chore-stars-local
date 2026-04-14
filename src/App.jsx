@@ -78,6 +78,30 @@ const T = {
     kidProfileTitle:"My Profile", kidNameLabel:"Your name", kidEmojiLabel:"Profile emoji", kidProfileSaved:"Profile saved!",
     pastDaysLimit:"Max days back", pastDaysLimitHint:"Max number of days in the past a child can select (0 = unlimited)",
     pastDaysLimitSaved:"Setting saved!",
+    tabStreaks:"🔥 Streaks",
+    addNewStreak:"➕ Add New Streak",
+    streakList:"🔥 Streak List",
+    noStreaks:"No streaks defined yet.",
+    streakTypeGeneral:"General (any chore)",
+    streakTypeTask:"Task (specific chore)",
+    streakChore:"Chore",
+    streakSteps:"Milestone Steps",
+    streakDays:"days",
+    streakBonus:"Bonus Stars",
+    addStep:"+ Add Step",
+    streakCurrent:(n)=>`🔥 ${n}-day streak!`,
+    streakNextMilestone:(rem,bonus)=>`${rem} more days → +${bonus} ⭐`,
+    streakMilestoneClaim:(bonus)=>`+${bonus} ⭐ Claim!`,
+    streakClaimSuccess:(bonus)=>`🔥 +${bonus} ⭐ streak bonus claimed!`,
+    streakAutoClaimed:(n,bonus)=>`🔥 Your ${n}-day streak ended — +${bonus} ⭐ auto-awarded!`,
+    streakBroken:"Start a new streak!",
+    filterBonuses:"Bonuses",
+    histStreakClaim:(name,days)=>`🔥 ${name} – ${days}-day streak`,
+    histGoalBonus:name=>`🏆 Goal: ${name}`,
+    streakAutoClaimedMax:(n,bonus)=>`🏆 ${n}-day streak max milestone — +${bonus} ⭐ auto-awarded!`,
+    adminGoalClaimHistory:"🏆 Goal Claim History",
+    adminStreakClaimHistory:"🔥 Streak Claim History",
+    noClaims:"No claims yet.",
   },
   pt: {
     appTitle:"Estrelas das Tarefas", kidTab:"Criança", adminTab:"Admin",
@@ -155,6 +179,30 @@ const T = {
     kidProfileTitle:"O Meu Perfil", kidNameLabel:"O teu nome", kidEmojiLabel:"Emoji de perfil", kidProfileSaved:"Perfil guardado!",
     pastDaysLimit:"Máx. dias no passado", pastDaysLimitHint:"Número máximo de dias no passado que a criança pode selecionar (0 = sem limite)",
     pastDaysLimitSaved:"Definição guardada!",
+    tabStreaks:"🔥 Sequências",
+    addNewStreak:"➕ Nova Sequência",
+    streakList:"🔥 Lista de Sequências",
+    noStreaks:"Nenhuma sequência definida.",
+    streakTypeGeneral:"Geral (qualquer tarefa)",
+    streakTypeTask:"Tarefa específica",
+    streakChore:"Tarefa",
+    streakSteps:"Marcos",
+    streakDays:"dias",
+    streakBonus:"Estrelas de bónus",
+    addStep:"+ Adicionar Marco",
+    streakCurrent:(n)=>`🔥 Sequência de ${n} dias!`,
+    streakNextMilestone:(rem,bonus)=>`Mais ${rem} dias → +${bonus} ⭐`,
+    streakMilestoneClaim:(bonus)=>`+${bonus} ⭐ Reclamar!`,
+    streakClaimSuccess:(bonus)=>`🔥 +${bonus} ⭐ bónus de sequência ganho!`,
+    streakAutoClaimed:(n,bonus)=>`🔥 A tua sequência de ${n} dias terminou — +${bonus} ⭐ atribuídos automaticamente!`,
+    streakBroken:"Começa uma nova sequência!",
+    filterBonuses:"Bónus",
+    histStreakClaim:(name,days)=>`🔥 ${name} – sequência de ${days} dias`,
+    histGoalBonus:name=>`🏆 Objetivo: ${name}`,
+    streakAutoClaimedMax:(n,bonus)=>`🏆 Sequência de ${n} dias — marco máximo! +${bonus} ⭐ atribuídos automaticamente!`,
+    adminGoalClaimHistory:"🏆 Histórico de Bónus de Objetivos",
+    adminStreakClaimHistory:"🔥 Histórico de Marcos de Sequências",
+    noClaims:"Ainda não há reivindicações.",
   },
 };
 
@@ -185,14 +233,14 @@ const DEF = {
     {id:1,name:{en:"Weekly Champion",pt:"Campeão Semanal"},type:"weekly",stars:15,bonus:5,threshold:70,claims:[]},
     {id:2,name:{en:"Monthly Star",pt:"Estrela do Mês"},type:"monthly",stars:50,bonus:20,threshold:60,claims:[]},
   ],
-  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",pastDaysLimit:0,
+  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",pastDaysLimit:0,streaks:[],goalClaimLog:[],
 };
 
 function loadData() {
   try {
     const s = localStorage.getItem(SK);
     const saved = s ? JSON.parse(s) : {};
-    const m = {...DEF,...saved,goals:saved.goals||DEF.goals,penalties:saved.penalties||DEF.penalties,penaltyLog:saved.penaltyLog||[]};
+    const m = {...DEF,...saved,goals:saved.goals||DEF.goals,penalties:saved.penalties||DEF.penalties,penaltyLog:saved.penaltyLog||[],streaks:saved.streaks||DEF.streaks,goalClaimLog:saved.goalClaimLog||[]};
     m.chores = m.chores.map(c=>({emoji:"🧹",weekdays:[0,1,2,3,4,5,6],desc:"",...c}));
     m.rewards = m.rewards.map(r=>({emoji:"🎁",desc:"",...r}));
     return m;
@@ -250,7 +298,8 @@ function makeApi(data, setData) {
       const goal = data.goals.find(g=>g.id===goalId);
       if(!goal||goal.claims.includes(periodKey)) return Promise.reject(new Error("already claimed"));
       const goals = data.goals.map(g=>g.id===goalId?{...g,claims:[...g.claims,periodKey]}:g);
-      commit({...data,goals,totalStars:data.totalStars+goal.bonus});
+      const logEntry={id:Date.now(),goalId,goalName:goal.name,pk:periodKey,bonus:goal.bonus,claimed_at:new Date().toISOString()};
+      commit({...data,goals,goalClaimLog:[...(data.goalClaimLog||[]),logEntry],totalStars:data.totalStars+goal.bonus});
       return Promise.resolve(goal.bonus);
     },
     submitChore:({chore_id,chore_name,stars,note,date,autoApprove,force}) => {
@@ -284,6 +333,39 @@ function makeApi(data, setData) {
     setKidPin: pin => { commit({...data,kidPin:pin}); return Promise.resolve(); },
     setKidProfile: ({name,emoji}) => { commit({...data,kidName:name,kidEmoji:emoji}); return Promise.resolve(); },
     setPastDaysLimit: n => { commit({...data,pastDaysLimit:n}); return Promise.resolve(); },
+    addStreak: f => { const s={id:Date.now(),claims:[],steps:[],...f}; commit({...data,streaks:[...data.streaks,s]}); return Promise.resolve(s); },
+    updateStreak:(id,f) => { commit({...data,streaks:data.streaks.map(s=>s.id===id?{...s,...f}:s)}); return Promise.resolve(); },
+    deleteStreak: id => { commit({...data,streaks:data.streaks.filter(s=>s.id!==id)}); return Promise.resolve(); },
+    claimStreakMilestone:(streakId,milestoneDays) => {
+      const streak=data.streaks.find(s=>s.id===streakId);
+      if(!streak) return Promise.reject(new Error("not found"));
+      const raw=computeRawStreak(streak.type,streak.chore_id,data.submissions,data.chores);
+      if(!raw.startDate) return Promise.reject(new Error("no streak"));
+      const claimedDaysInRun=streak.claims.filter(c=>c.run_start===raw.startDate).reduce((s,c)=>s+c.milestone_days,0);
+      const effective=raw.count-claimedDaysInRun;
+      if(effective<milestoneDays) return Promise.reject(new Error("not reached"));
+      const step=streak.steps.find(s=>s.days===milestoneDays);
+      if(!step) return Promise.reject(new Error("step not found"));
+      const claim={milestone_days:milestoneDays,awarded_at:new Date().toISOString(),run_start:raw.startDate};
+      const streaks=data.streaks.map(s=>s.id===streakId?{...s,claims:[...s.claims,claim]}:s);
+      commit({...data,streaks,totalStars:data.totalStars+step.bonus});
+      return Promise.resolve(step.bonus);
+    },
+    processAutoClaims:(pending) => {
+      if(!pending.length) return Promise.resolve([]);
+      const now=new Date().toISOString();
+      let streaks=[...data.streaks]; let totalBonus=0; const bonuses=[];
+      for(const p of pending){
+        const streak=streaks.find(s=>s.id===p.streakId); if(!streak) continue;
+        const step=streak.steps.find(s=>s.days===p.milestoneDays); if(!step) continue;
+        if(streak.claims.some(c=>c.run_start===p.runStart&&c.milestone_days===p.milestoneDays)) continue;
+        const claim={milestone_days:p.milestoneDays,awarded_at:now,run_start:p.runStart,auto:true};
+        streaks=streaks.map(s=>s.id===p.streakId?{...s,claims:[...s.claims,claim]}:s);
+        totalBonus+=step.bonus; bonuses.push(step.bonus);
+      }
+      commit({...data,streaks,totalStars:data.totalStars+totalBonus});
+      return Promise.resolve(bonuses);
+    },
   };
 }
 
@@ -309,6 +391,93 @@ function evalGoals(goals,subs) {
     const claimed=g.claims.includes(pk), complete=pct>=100;
     return {...g,earned,pct,claimed,complete,alerting:!claimed&&!complete&&pct>=g.threshold,remaining:Math.max(0,g.stars-earned),pk};
   });
+}
+
+// ── Streak helpers ─────────────────────────────────────────────────────────
+function computeRawStreak(type,choreId,submissions,chores,asOfDate) {
+  const maxDate=asOfDate||todayStr();
+  const todayISO=maxDate;
+  const yesterdayISO=new Date(new Date(maxDate+"T12:00:00").getTime()-86400000).toISOString().slice(0,10);
+  let subs=submissions.filter(s=>s.status==="approved"&&s.submitted_at.slice(0,10)<=maxDate);
+  let allowedDays=null;
+  if(type==="task"){
+    subs=subs.filter(s=>s.chore_id===choreId);
+    const chore=chores.find(c=>c.id===choreId);
+    allowedDays=chore?(chore.weekdays||[0,1,2,3,4,5,6]):[0,1,2,3,4,5,6];
+  }
+  const submittedDates=new Set(subs.map(s=>s.submitted_at.slice(0,10)));
+  if(!submittedDates.size) return{count:0,startDate:null,alive:false};
+  const lastDate=[...submittedDates].sort().reverse()[0];
+  let alive=true;
+  if(type==="task"){
+    let d=new Date(new Date(lastDate+"T12:00:00").getTime()+86400000);
+    while(d.toISOString().slice(0,10)<todayISO){if(allowedDays.includes(d.getDay())){alive=false;break;}d=new Date(d.getTime()+86400000);}
+  } else {
+    alive=lastDate===todayISO||lastDate===yesterdayISO;
+  }
+  if(!alive) return{count:0,startDate:null,alive:false};
+  let count=0,startDate=lastDate,d=new Date(lastDate+"T12:00:00"),safety=0;
+  while(safety++<400){
+    const iso=d.toISOString().slice(0,10);
+    if(allowedDays&&!allowedDays.includes(d.getDay())){d=new Date(d.getTime()-86400000);continue;}
+    if(!submittedDates.has(iso)) break;
+    count++;startDate=iso;d=new Date(d.getTime()-86400000);
+  }
+  return{count,startDate,alive:true};
+}
+function evalStreaks(streaks,submissions,chores) {
+  return streaks.map(streak=>{
+    const raw=computeRawStreak(streak.type,streak.chore_id,submissions,chores);
+    const{count:rawCount,startDate,alive}=raw;
+    const sortedSteps=[...streak.steps].sort((a,b)=>a.days-b.days);
+    const claimedDaysInRun=startDate?streak.claims.filter(c=>c.run_start===startDate).reduce((s,c)=>s+c.milestone_days,0):0;
+    const effectiveStreak=rawCount-claimedDaysInRun;
+    const claimedInRun=startDate?streak.claims.filter(c=>c.run_start===startDate).map(c=>c.milestone_days):[];
+    let claimableStep=null;
+    for(let i=sortedSteps.length-1;i>=0;i--){
+      const step=sortedSteps[i],nextStep=sortedSteps[i+1];
+      if(effectiveStreak>=step.days&&(!nextStep||effectiveStreak<nextStep.days)&&!claimedInRun.includes(step.days)){claimableStep=step;break;}
+    }
+    const nextStep=sortedSteps.find(s=>effectiveStreak<s.days&&(!claimableStep||s.days>claimableStep.days));
+    return{...streak,rawCount,effectiveStreak,startDate,alive,claimableStep,nextStep,sortedSteps};
+  });
+}
+function findPendingAutoClaims(streaks,submissions,chores) {
+  const result=[];
+  for(const streak of streaks){
+    const current=computeRawStreak(streak.type,streak.chore_id,submissions,chores);
+    const sortedSteps=[...streak.steps].sort((a,b)=>a.days-b.days);
+    if(current.count===0){
+      // Broken streak: auto-claim highest reachable milestone from the last run
+      let subs=submissions.filter(s=>s.status==="approved");
+      if(streak.type==="task") subs=subs.filter(s=>s.chore_id===streak.chore_id);
+      const dates=[...new Set(subs.map(s=>s.submitted_at.slice(0,10)))].sort().reverse();
+      if(!dates.length) continue;
+      const lastDate=dates[0];
+      const rawAtBreak=computeRawStreak(streak.type,streak.chore_id,submissions,chores,lastDate);
+      if(!rawAtBreak.count||!rawAtBreak.startDate) continue;
+      const runStart=rawAtBreak.startDate;
+      const claimedInRun=streak.claims.filter(c=>c.run_start===runStart);
+      const claimedDaysInRun=claimedInRun.reduce((s,c)=>s+c.milestone_days,0);
+      const effectiveAtBreak=rawAtBreak.count-claimedDaysInRun;
+      const highestStep=[...sortedSteps].reverse().find(s=>effectiveAtBreak>=s.days);
+      if(!highestStep) continue;
+      if(claimedInRun.some(c=>c.milestone_days===highestStep.days)) continue;
+      result.push({streakId:streak.id,milestoneDays:highestStep.days,runStart,bonus:highestStep.bonus,rawCount:rawAtBreak.count});
+    } else {
+      // Alive streak: auto-claim when effective streak has reached the max milestone
+      if(!current.startDate||!sortedSteps.length) continue;
+      const runStart=current.startDate;
+      const claimedInRun=streak.claims.filter(c=>c.run_start===runStart);
+      const claimedDaysInRun=claimedInRun.reduce((s,c)=>s+c.milestone_days,0);
+      const effectiveCurrent=current.count-claimedDaysInRun;
+      const maxStep=sortedSteps[sortedSteps.length-1];
+      if(effectiveCurrent<maxStep.days) continue;
+      if(claimedInRun.some(c=>c.milestone_days===maxStep.days)) continue;
+      result.push({streakId:streak.id,milestoneDays:maxStep.days,runStart,bonus:maxStep.bonus,rawCount:current.count,alive:true});
+    }
+  }
+  return result;
 }
 
 // ── Pure helpers ───────────────────────────────────────────────────────────
@@ -423,7 +592,7 @@ function ItemForm({initial,isReward,onSave,onCancel,t}) {
 }
 
 // ── Graph ──────────────────────────────────────────────────────────────────
-function buildGraph(subs,reds,plog) {
+function buildGraph(subs,reds,plog,streakClaimsFlat,goalClaimLog) {
   const today=new Date(); today.setHours(23,59,59,999);
   const days=Array.from({length:30},(_,i)=>{const d=new Date(today);d.setDate(d.getDate()-(29-i));return{date:d,label:fmtGL(d),earned:0,spent:0,penalties:0};});
   const start=new Date(days[0].date); start.setHours(0,0,0,0);
@@ -431,6 +600,8 @@ function buildGraph(subs,reds,plog) {
   subs.forEach(s=>{if(s.status!=="approved")return;const i=slot(s.submitted_at);if(i>=0)days[i].earned+=s.stars;});
   reds.forEach(r=>{const i=slot(r.redeemed_at);if(i>=0)days[i].spent+=r.stars;});
   (plog||[]).forEach(p=>{const i=slot(p.applied_at);if(i>=0)days[i].penalties+=p.stars;});
+  (streakClaimsFlat||[]).forEach(c=>{const i=slot(c.awarded_at);if(i>=0)days[i].earned+=c.bonus;});
+  (goalClaimLog||[]).forEach(g=>{const i=slot(g.claimed_at);if(i>=0)days[i].earned+=g.bonus;});
   let run=0;
   return days.map(d=>{run+=d.earned-d.spent-d.penalties;return{...d,balance:Math.max(0,run)};});
 }
@@ -438,7 +609,8 @@ function buildGraph(subs,reds,plog) {
 function StarsGraph({data}) {
   const t=useLang();
   const [tip,setTip]=useState(null); const [hov,setHov]=useState(null);
-  const gd=useMemo(()=>buildGraph(data.submissions,data.redemptions,data.penaltyLog),[data]);
+  const streakClaimsFlat=useMemo(()=>{const r=[];(data.streaks||[]).forEach(s=>s.claims.forEach(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);if(step)r.push({...c,bonus:step.bonus});}));return r;},[data.streaks]);
+  const gd=useMemo(()=>buildGraph(data.submissions,data.redemptions,data.penaltyLog,streakClaimsFlat,data.goalClaimLog),[data,streakClaimsFlat]);
   const has=gd.some(d=>d.earned>0||d.spent>0||d.penalties>0);
   const W=500,H=200,PL=32,PR=12,PT=14,PB=44,gW=W-PL-PR,gH=H-PT-PB;
   const mv=Math.max(1,...gd.map(d=>Math.max(d.balance,d.earned,d.spent,d.penalties)));
@@ -500,6 +672,77 @@ function GoalBanners({goals,submissions,api,refresh}) {
           </div>
         </div>
       );})}
+    </div>
+  );
+}
+
+// ── StreakBanners ──────────────────────────────────────────────────────────
+function StreakBanners({data,api,refresh}) {
+  const t=useLang(); const lang=useContext(LangCtx);
+  const{streaks,submissions,chores}=data;
+  const[flash,setFlash]=useState(null);
+  const[autoFlashes,setAutoFlashes]=useState([]);
+
+  useEffect(()=>{
+    const pending=findPendingAutoClaims(streaks,submissions,chores);
+    if(!pending.length) return;
+    api.processAutoClaims(pending).then(bonuses=>{
+      const msgs=pending.map((p,i)=>({n:p.rawCount,bonus:bonuses[i]||p.bonus,alive:p.alive})).filter(m=>m.bonus);
+      if(msgs.length){setAutoFlashes(msgs);setTimeout(()=>setAutoFlashes([]),6000);}
+      refresh();
+    }).catch(()=>{});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[submissions.length]);
+
+  const ev=useMemo(()=>evalStreaks(streaks,submissions,chores),[streaks,submissions,chores]);
+  const visible=ev.filter(s=>s.alive||s.claimableStep);
+
+  if(!visible.length&&!autoFlashes.length&&!flash) return null;
+
+  const claim=async s=>{
+    try{const bonus=await api.claimStreakMilestone(s.id,s.claimableStep.days,s.startDate);setFlash(t.streakClaimSuccess(bonus));setTimeout(()=>setFlash(null),3000);refresh();}catch{}
+  };
+
+  return(
+    <div style={{marginBottom:12}}>
+      {autoFlashes.map((f,i)=>(
+        <div key={i} style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#fff",borderRadius:14,padding:"14px 18px",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:28}}>{f.alive?"🏆":"🔥"}</span><span>{f.alive?t.streakAutoClaimedMax(f.n,f.bonus):t.streakAutoClaimed(f.n,f.bonus)}</span>
+        </div>
+      ))}
+      {flash&&<div style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#fff",borderRadius:14,padding:"14px 18px",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:28}}>🔥</span><span>{flash}</span></div>}
+      {visible.map(s=>{
+        const choreObj=s.type==="task"?chores.find(c=>c.id===s.chore_id):null;
+        const nextPct=s.nextStep?Math.min(100,Math.round((s.effectiveStreak/s.nextStep.days)*100)):100;
+        return(
+          <div key={s.id} style={{background:"linear-gradient(135deg,#f97316,#ea580c)",borderRadius:14,padding:"14px 18px",marginBottom:10,color:"#fff"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:"clamp(13px,3vw,15px)",marginBottom:2}}>
+                  🔥 {rn(s.name,lang)}{choreObj&&<span style={{fontSize:12,opacity:.8,marginLeft:8}}>({rn(choreObj.name,lang)})</span>}
+                </div>
+                <div style={{fontSize:"clamp(14px,3.5vw,16px)",fontWeight:800,marginBottom:6}}>
+                  {s.effectiveStreak>0?t.streakCurrent(s.effectiveStreak):t.streakBroken}
+                </div>
+                {s.nextStep&&(
+                  <>
+                    <div style={{background:"rgba(255,255,255,.25)",borderRadius:99,height:8,overflow:"hidden",marginBottom:4}}>
+                      <div style={{width:`${nextPct}%`,background:"#fff",borderRadius:99,height:"100%",transition:"width .4s"}}/>
+                    </div>
+                    <div style={{fontSize:11,opacity:.85}}>{t.streakNextMilestone(s.nextStep.days-s.effectiveStreak,s.nextStep.bonus)}</div>
+                  </>
+                )}
+                {!s.nextStep&&s.effectiveStreak>0&&<div style={{fontSize:12,opacity:.85}}>🏆 Max milestone reached!</div>}
+              </div>
+              {s.claimableStep&&(
+                <button style={{...btn("#fff","#ea580c"),fontSize:12,padding:"6px 14px",flexShrink:0}} onClick={()=>claim(s)}>
+                  {t.streakMilestoneClaim(s.claimableStep.bonus)}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -577,8 +820,9 @@ function KidPanel({data,api,refresh}) {
 
   const handleRedeem=async r=>{setRedeemTarget(null);try{await api.redeemReward({reward_id:r.id,reward_name:r.name,stars:r.stars});showFlash(t.redeemSuccess(r.name,r.stars));refresh();}catch{showFlash(t.notEnoughStars,"#ef4444");}};
 
-  const allH=[...submissions.map(s=>({...s,_t:"chore",_d:new Date(s.submitted_at)})),...redemptions.map(r=>({...r,_t:"redemption",_d:new Date(r.redeemed_at)})),...penaltyLog.map(p=>({...p,_t:"penalty",_d:new Date(p.applied_at)}))].sort((a,b)=>b._d-a._d);
-  const hist=allH.filter(x=>{if(ftType!=="all"&&x._t!==ftType)return false;if(ftStatus!=="all"){if(x._t!=="chore")return ftStatus==="redeemed";if(x.status!==ftStatus)return false;}return true;});
+  const streakClaimEntries=(data.streaks||[]).flatMap(s=>s.claims.map(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);return{...c,_t:"streak",_d:new Date(c.awarded_at),streakId:s.id,streakName:s.name,bonus:step?step.bonus:0};}));
+  const allH=[...submissions.map(s=>({...s,_t:"chore",_d:new Date(s.submitted_at)})),...redemptions.map(r=>({...r,_t:"redemption",_d:new Date(r.redeemed_at)})),...penaltyLog.map(p=>({...p,_t:"penalty",_d:new Date(p.applied_at)})),...streakClaimEntries,...(data.goalClaimLog||[]).map(g=>({...g,_t:"goal",_d:new Date(g.claimed_at)}))].sort((a,b)=>b._d-a._d);
+  const hist=allH.filter(x=>{if(ftType==="bonus")return x._t==="streak"||x._t==="goal";if(ftType!=="all"&&x._t!==ftType)return false;if(ftStatus!=="all"){if(x._t!=="chore")return ftStatus==="redeemed";if(x.status!==ftStatus)return false;}return true;});
   const stLabel=s=>t[`status${s[0].toUpperCase()+s.slice(1)}`]||s;
 
   return (
@@ -589,6 +833,7 @@ function KidPanel({data,api,refresh}) {
       {showEditProfile&&<KidProfileModal kidName={data.kidName||""} kidEmoji={data.kidEmoji||"👧🏽"} api={api} refresh={refresh} onClose={(msg)=>{setShowEditProfile(false);if(msg)showFlash(msg);}}/>}
 
       <GoalBanners goals={goals} submissions={submissions} api={api} refresh={refresh}/>
+      {data.streaks&&data.streaks.length>0&&<StreakBanners data={data} api={api} refresh={refresh}/>}
 
       <div style={{...card,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",color:"#fff",textAlign:"center",position:"relative"}}>
         <div style={{fontSize:40,marginBottom:2,lineHeight:1}}>{data.kidEmoji||"👧🏽"}</div>
@@ -669,21 +914,25 @@ function KidPanel({data,api,refresh}) {
           <h3 style={{margin:"0 0 12px",color:"#374151"}}>{t.fullHistory}</h3>
           <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
             <div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:4}}>
-              {[["all",t.filterAll],["chore",t.filterChores],["redemption",t.filterRedemptions],["penalty",t.filterPenalties]].map(([v,l])=>(<button key={v} onClick={()=>{setFtType(v);setFtStatus("all");}} style={{...tab(ftType===v),padding:"5px 10px",fontSize:12}}>{l}</button>))}
+              {[["all",t.filterAll],["chore",t.filterChores],["redemption",t.filterRedemptions],["penalty",t.filterPenalties],["bonus",t.filterBonuses]].map(([v,l])=>(<button key={v} onClick={()=>{setFtType(v);setFtStatus("all");}} style={{...tab(ftType===v),padding:"5px 10px",fontSize:12}}>{l}</button>))}
             </div>
             {ftType==="chore"&&(<div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:4}}>{[["all",t.filterAll],["pending",t.statusPending],["approved",t.statusApproved],["rejected",t.statusRejected]].map(([v,l])=>(<button key={v} onClick={()=>setFtStatus(v)} style={{...tab(ftStatus===v),padding:"5px 10px",fontSize:12,background:ftStatus===v?sc(v==="all"?"approved":v):"#f1f5f9"}}>{l}</button>))}</div>)}
           </div>
           {!hist.length&&<p style={{color:"#9ca3af"}}>{t.nothingYet}</p>}
           {hist.map(x=>{
-            const icon=x._t==="chore"?choreEmoji(x):x._t==="redemption"?rewardEmoji(x):"⚠️";
-            return (<div key={`${x._t}-${x.id}`} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}>
+            const icon=x._t==="chore"?choreEmoji(x):x._t==="redemption"?rewardEmoji(x):x._t==="streak"?"🔥":x._t==="goal"?"🏆":"⚠️";
+            const name=x._t==="chore"?x.chore_name:x._t==="redemption"?x.reward_name:x._t==="streak"?t.histStreakClaim(rn(x.streakName,lang),x.milestone_days):x._t==="goal"?t.histGoalBonus(rn(x.goalName,lang)):x.penalty_name;
+            const stars=x._t==="streak"||x._t==="goal"?x.bonus:x.stars;
+            const sign=x._t==="redemption"||x._t==="penalty"?"-":"+";
+            const col=x._t==="redemption"||x._t==="penalty"?"#ef4444":x._t==="streak"||x._t==="goal"?"#f59e0b":"#10b981";
+            return (<div key={`${x._t}-${x._t==="streak"?`${x.streakId}-${x.awarded_at}`:x._t==="goal"?x.id:x.id}`} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}>
               <div>
-                <div style={{display:"flex",alignItems:"center",gap:6}}><span>{icon}</span><span style={{fontWeight:600,color:"#111827"}}>{x._t==="chore"?x.chore_name:x._t==="redemption"?x.reward_name:x.penalty_name}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><span>{icon}</span><span style={{fontWeight:600,color:"#111827"}}>{name}</span>{x._t==="streak"&&x.auto&&<span style={{...bdg("#f59e0b"),fontSize:10}}>auto</span>}</div>
                 <div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(x._d)}</div>
                 {x.note&&<div style={{fontSize:12,color:"#6b7280",fontStyle:"italic"}}>"{x.note}"</div>}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                <span style={{fontWeight:700,fontSize:14,color:x._t==="chore"?"#10b981":"#ef4444"}}>{x._t==="chore"?"+":"-"}{x.stars} ⭐</span>
+                <span style={{fontWeight:700,fontSize:14,color:col}}>{sign}{stars} ⭐</span>
                 {x._t==="chore"&&<span style={bdg(sc(x.status))}>{stLabel(x.status)}</span>}
                 {x._t==="penalty"&&<span style={bdg("#ef4444")}>⚠️</span>}
               </div>
@@ -825,6 +1074,8 @@ function AdminPenalties({data,api,refresh}) {
 function AdminGoals({data,api,refresh}) {
   const t=useLang(); const lang=useContext(LangCtx);
   const {goals,submissions}=data;
+  const goalClaimLog=[...(data.goalClaimLog||[])].reverse();
+  const fmtPk=pk=>{if(pk.startsWith('w-')){const[,y,m,d]=pk.split('-');return`${t.goalBannerWeekly} ${d}/${parseInt(m)+1}/${y}`;}const[,y,m]=pk.split('-');return`${t.goalBannerMonthly}: ${t.monthNames[parseInt(m)]} ${y}`;};
   const [ng,setNg]=useState({name:"",type:"weekly",stars:15,bonus:5,threshold:70});
   const ev=useMemo(()=>evalGoals(goals,submissions),[goals,submissions]);
   const fld=(label,child,hint)=>(<div style={{marginBottom:10}}><label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:4}}>{label}</label>{child}{hint&&<div style={{fontSize:11,color:"#9ca3af",marginTop:3}}>{hint}</div>}</div>);
@@ -855,6 +1106,127 @@ function AdminGoals({data,api,refresh}) {
               </div>
               <button style={btn("#ef4444")} onClick={async()=>{await api.deleteGoal(g.id);refresh();}}>{t.delete}</button>
             </div>
+          </div>
+        ))}
+      </div>
+      <div style={card}>
+        <h3 style={{margin:"0 0 14px"}}>{t.adminGoalClaimHistory}</h3>
+        {!goalClaimLog.length&&<p style={{color:"#9ca3af"}}>{t.noClaims}</p>}
+        {goalClaimLog.map(g=>(
+          <div key={g.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}>
+            <div>
+              <div style={{fontWeight:600,color:"#111827"}}>🏆 {rn(g.goalName,lang)}</div>
+              <div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(g.claimed_at)}</div>
+              <div style={{fontSize:12,color:"#6b7280"}}>{fmtPk(g.pk)}</div>
+            </div>
+            <span style={{fontWeight:700,color:"#f59e0b",flexShrink:0}}>+{g.bonus} ⭐</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── AdminStreaks ───────────────────────────────────────────────────────────
+function AdminStreaks({data,api,refresh}) {
+  const t=useLang(); const lang=useContext(LangCtx);
+  const{streaks,submissions,chores}=data;
+  const allStreakClaims=useMemo(()=>(streaks||[]).flatMap(s=>{const choreObj=s.type==="task"?chores.find(c=>c.id===s.chore_id):null;return s.claims.map(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);return{...c,streakName:s.name,bonus:step?step.bonus:0,choreObj};});}).sort((a,b)=>new Date(b.awarded_at)-new Date(a.awarded_at)),[streaks,chores]);
+  const[showForm,setShowForm]=useState(false);
+  const[form,setForm]=useState({name:"",type:"general",chore_id:null,steps:[]});
+  const ev=useMemo(()=>evalStreaks(streaks,submissions,chores),[streaks,submissions,chores]);
+  const addStep=()=>setForm(f=>({...f,steps:[...f.steps,{days:7,bonus:3}]}));
+  const updStep=(i,k,v)=>setForm(f=>{const steps=[...f.steps];steps[i]={...steps[i],[k]:Math.max(1,parseInt(v)||1)};return{...f,steps};});
+  const rmStep=i=>setForm(f=>({...f,steps:f.steps.filter((_,idx)=>idx!==i)}));
+  const handleSave=async()=>{
+    if(!form.name.trim()) return;
+    const steps=[...form.steps].sort((a,b)=>a.days-b.days);
+    await api.addStreak({name:form.name,type:form.type,chore_id:form.type==="task"?form.chore_id:null,steps});
+    setForm({name:"",type:"general",chore_id:null,steps:[]});setShowForm(false);refresh();
+  };
+  return(
+    <div>
+      <div style={card}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showForm?14:0}}>
+          <h3 style={{margin:0}}>{t.addNewStreak}</h3>
+          {!showForm&&<button style={btn("#f97316")} onClick={()=>setShowForm(true)}>+ {t.add}</button>}
+        </div>
+        {showForm&&(
+          <div>
+            <div style={{marginBottom:10}}>
+              <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:4}}>Name</label>
+              <input placeholder="Streak name" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} style={inp}/>
+            </div>
+            <div style={{marginBottom:10}}>
+              <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:4}}>Type</label>
+              <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value,chore_id:null}))} style={{...inp,background:"#f8fafc"}}>
+                <option value="general">{t.streakTypeGeneral}</option>
+                <option value="task">{t.streakTypeTask}</option>
+              </select>
+            </div>
+            {form.type==="task"&&(
+              <div style={{marginBottom:10}}>
+                <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:4}}>{t.streakChore}</label>
+                <select value={form.chore_id||""} onChange={e=>setForm(f=>({...f,chore_id:parseInt(e.target.value)||null}))} style={{...inp,background:"#f8fafc"}}>
+                  <option value="">— Pick a chore —</option>
+                  {chores.map(c=><option key={c.id} value={c.id}>{c.emoji||"🧹"} {rn(c.name,lang)}</option>)}
+                </select>
+              </div>
+            )}
+            <div style={{marginBottom:12}}>
+              <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:6}}>{t.streakSteps}</label>
+              {form.steps.map((step,i)=>(
+                <div key={i} style={{display:"flex",gap:8,marginBottom:6,alignItems:"center"}}>
+                  <input type="number" min={1} value={step.days} onChange={e=>updStep(i,"days",e.target.value)} style={{...inp,width:65,flexShrink:0}}/>
+                  <span style={{fontSize:12,color:"#6b7280",whiteSpace:"nowrap"}}>{t.streakDays} →</span>
+                  <input type="number" min={1} value={step.bonus} onChange={e=>updStep(i,"bonus",e.target.value)} style={{...inp,width:65,flexShrink:0}}/>
+                  <span style={{fontSize:12,color:"#f97316"}}>⭐</span>
+                  <button style={btn("#ef4444")} onClick={()=>rmStep(i)}>✕</button>
+                </div>
+              ))}
+              <button style={{...btn("#6b7280"),fontSize:12,marginTop:4}} onClick={addStep}>{t.addStep}</button>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button style={btn("#f97316")} onClick={handleSave}>{t.saveChore}</button>
+              <button style={btn("#9ca3af")} onClick={()=>setShowForm(false)}>{t.cancelEdit}</button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div style={card}>
+        <h3 style={{margin:"0 0 14px"}}>{t.streakList}</h3>
+        {!ev.length&&<p style={{color:"#9ca3af"}}>{t.noStreaks}</p>}
+        {ev.map(s=>{
+          const choreObj=s.type==="task"?chores.find(c=>c.id===s.chore_id):null;
+          return(
+            <div key={s.id} style={{padding:"14px 0",borderBottom:"1px solid #f3f4f6"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,color:"#111827"}}>🔥 {rn(s.name,lang)}</div>
+                  <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{s.type==="general"?t.streakTypeGeneral:t.streakTypeTask}{choreObj&&` · ${rn(choreObj.name,lang)}`}</div>
+                  {s.sortedSteps.length>0&&<div style={{fontSize:12,color:"#f97316",marginTop:4}}>{s.sortedSteps.map(st=>`${st.days}d→${st.bonus}⭐`).join(" · ")}</div>}
+                  {s.alive&&s.effectiveStreak>0&&<div style={{fontSize:12,color:"#10b981",marginTop:2}}>🔥 Current: {s.effectiveStreak} days{s.claimableStep?` · Milestone ready: +${s.claimableStep.bonus}⭐`:""}</div>}
+                </div>
+                <button style={btn("#ef4444")} onClick={async()=>{await api.deleteStreak(s.id);refresh();}}>{t.delete}</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={card}>
+        <h3 style={{margin:"0 0 14px"}}>{t.adminStreakClaimHistory}</h3>
+        {!allStreakClaims.length&&<p style={{color:"#9ca3af"}}>{t.noClaims}</p>}
+        {allStreakClaims.map((c,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}>
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontWeight:600,color:"#111827"}}>🔥 {rn(c.streakName,lang)}</span>
+                {c.auto&&<span style={{...bdg("#f59e0b"),fontSize:10}}>auto</span>}
+              </div>
+              <div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(c.awarded_at)}</div>
+              <div style={{fontSize:12,color:"#6b7280"}}>{c.milestone_days} {t.streakDays}{c.choreObj&&` · ${rn(c.choreObj.name,lang)}`}</div>
+            </div>
+            <span style={{fontWeight:700,color:"#f97316",flexShrink:0}}>+{c.bonus} ⭐</span>
           </div>
         ))}
       </div>
@@ -905,7 +1277,7 @@ function AdminPanel({data,api,refresh,onLock}) {
         {stats.map(({l,v,c})=>(<div key={l} style={{...card,textAlign:"center",padding:12,marginBottom:0}}><div style={{fontSize:22,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:10,color:"#6b7280"}}>{l}</div></div>))}
       </div>
       <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-        {[["approvals",`${t.approvals}${pending.length?` (${pending.length})`:""}`],["redemptions",t.redemptions],["chores",t.choresLabel],["rewards",t.rewardsLabel],["penalties",t.tabPenalties],["goals",t.tabGoals],["graph",t.tabGraph],["settings",t.tabSettings]].map(([k,l])=>(<button key={k} style={tab(tabA===k)} onClick={()=>setTabA(k)}>{l}</button>))}
+        {[["approvals",`${t.approvals}${pending.length?` (${pending.length})`:""}`],["redemptions",t.redemptions],["chores",t.choresLabel],["rewards",t.rewardsLabel],["penalties",t.tabPenalties],["goals",t.tabGoals],["streaks",t.tabStreaks],["graph",t.tabGraph],["settings",t.tabSettings]].map(([k,l])=>(<button key={k} style={tab(tabA===k)} onClick={()=>setTabA(k)}>{l}</button>))}
       </div>
 
       {tabA==="approvals"&&(
@@ -1048,6 +1420,7 @@ function AdminPanel({data,api,refresh,onLock}) {
 
       {tabA==="penalties"&&<AdminPenalties data={data} api={api} refresh={refresh}/>}
       {tabA==="goals"&&<AdminGoals data={data} api={api} refresh={refresh}/>}
+      {tabA==="streaks"&&<AdminStreaks data={data} api={api} refresh={refresh}/>}
       {tabA==="graph"&&<StarsGraph data={data}/>}
       {tabA==="settings"&&<AdminSettings data={data} api={api} refresh={refresh}/>}
     </div>
