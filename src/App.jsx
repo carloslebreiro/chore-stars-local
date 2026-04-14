@@ -811,6 +811,8 @@ function KidPanel({data,api,refresh}) {
   const [ftStatus,setFtStatus]=useState("all");
   const [showChangePin,setShowChangePin]=useState(false);
   const [showEditProfile,setShowEditProfile]=useState(false);
+  const [isMobileK,setIsMobileK]=useState(()=>window.innerWidth<768);
+  useEffect(()=>{const h=()=>setIsMobileK(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 
   const showFlash=(msg,c="#10b981")=>{setFlash({msg,c});setTimeout(()=>setFlash(null),2500);};
   const selWd=isoWeekday(selDate);
@@ -826,29 +828,50 @@ function KidPanel({data,api,refresh}) {
   const hist=allH.filter(x=>{if(ftType==="bonus")return x._t==="streak"||x._t==="goal";if(ftType!=="all"&&x._t!==ftType)return false;if(ftStatus!=="all"){if(x._t!=="chore")return ftStatus==="redeemed";if(x.status!==ftStatus)return false;}return true;});
   const stLabel=s=>t[`status${s[0].toUpperCase()+s.slice(1)}`]||s;
 
+  const stripEmojiK=s=>s.replace(/^\S+\s/,"");
+  const kidTabs=[["chores","🧹",stripEmojiK(t.tabChores)],["rewards","🎁",stripEmojiK(t.tabRewards)],["history","📜",stripEmojiK(t.tabHistory)],["graph","📈",stripEmojiK(t.tabGraph)]];
+
   return (
-    <div>
+    <div style={{paddingBottom:isMobileK?74:0}}>
       {choreTarget&&<ChoreModal chore={choreTarget} date={selDate} api={api} lang={lang} t={t} onSuccess={()=>{setChoreTarget(null);showFlash(t.choreSubmitted);refresh();}} onClose={()=>setChoreTarget(null)}/>}
       {redeemTarget&&<RewardModal reward={redeemTarget} totalStars={totalStars} t={t} onConfirm={()=>handleRedeem(redeemTarget)} onClose={()=>setRedeemTarget(null)}/>}
       {showChangePin&&<KidChangePinModal api={api} refresh={refresh} onClose={(msg)=>{setShowChangePin(false);if(msg)showFlash(msg);}}/>}
       {showEditProfile&&<KidProfileModal kidName={data.kidName||""} kidEmoji={data.kidEmoji||"👧🏽"} api={api} refresh={refresh} onClose={(msg)=>{setShowEditProfile(false);if(msg)showFlash(msg);}}/>}
 
+      {/* Hero header */}
+      <div style={{...card,background:"linear-gradient(135deg,#4f46e5 0%,#7c3aed 55%,#9333ea 100%)",color:"#fff",textAlign:"center",position:"relative",padding:"24px 20px 18px",overflow:"hidden",marginBottom:16}}>
+        <div style={{position:"absolute",top:-40,right:-40,width:140,height:140,borderRadius:"50%",background:"rgba(255,255,255,0.06)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",bottom:-24,left:-24,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.04)",pointerEvents:"none"}}/>
+        <button onClick={()=>setShowChangePin(true)} style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"5px 10px",cursor:"pointer",color:"#fff",fontSize:13,fontWeight:600}}>🔑</button>
+        <button onClick={()=>setShowEditProfile(true)} style={{position:"absolute",top:12,left:12,background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"5px 10px",cursor:"pointer",color:"#fff",fontSize:13,fontWeight:600}}>✏️</button>
+        <div style={{fontSize:44,lineHeight:1,marginBottom:4}}>{data.kidEmoji||"👧🏽"}</div>
+        {data.kidName&&<div style={{fontSize:16,fontWeight:700,opacity:.9,marginBottom:12}}>{data.kidName}</div>}
+        <div style={{display:"inline-flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.13)",borderRadius:20,padding:"10px 24px",marginBottom:8}}>
+          <span style={{fontSize:34,lineHeight:1}}>⭐</span>
+          <span style={{fontSize:54,fontWeight:900,lineHeight:1,letterSpacing:"-1px"}}>{totalStars}</span>
+        </div>
+        <div style={{fontSize:13,opacity:.8,marginBottom:10}}>{t.starsAvailable}</div>
+        <div style={{display:"flex",justifyContent:"center",gap:14,fontSize:12,opacity:.72}}>
+          <span>✅ {submissions.filter(s=>s.status==="approved").length} {t.completed}</span>
+          <span>·</span>
+          <span>⏳ {submissions.filter(s=>s.status==="pending").length} {t.pending}</span>
+        </div>
+      </div>
+
       <GoalBanners goals={goals} submissions={submissions} api={api} refresh={refresh}/>
       {data.streaks&&data.streaks.length>0&&<StreakBanners data={data} api={api} refresh={refresh}/>}
 
-      <div style={{...card,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",color:"#fff",textAlign:"center",position:"relative"}}>
-        <div style={{fontSize:40,marginBottom:2,lineHeight:1}}>{data.kidEmoji||"👧🏽"}</div>
-        {data.kidName&&<div style={{fontSize:16,fontWeight:700,opacity:.9,marginBottom:4}}>{data.kidName}</div>}
-        <div style={{fontSize:52,fontWeight:800}}>{totalStars}</div>
-        <div style={{fontSize:18,opacity:.85}}>⭐ {t.starsAvailable}</div>
-        <div style={{marginTop:8,fontSize:13,opacity:.7}}>{submissions.filter(s=>s.status==="approved").length} {t.completed} · {submissions.filter(s=>s.status==="pending").length} {t.pending}</div>
-        <button onClick={()=>setShowChangePin(true)} style={{position:"absolute",top:10,right:10,background:"rgba(255,255,255,.18)",border:"none",borderRadius:8,padding:"4px 9px",cursor:"pointer",color:"#fff",fontSize:13,fontWeight:600}}>🔑</button>
-        <button onClick={()=>setShowEditProfile(true)} style={{position:"absolute",top:10,left:10,background:"rgba(255,255,255,.18)",border:"none",borderRadius:8,padding:"4px 9px",cursor:"pointer",color:"#fff",fontSize:13,fontWeight:600}}>✏️</button>
-      </div>
-
-      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-        {[["chores",t.tabChores],["rewards",t.tabRewards],["history",t.tabHistory],["graph",t.tabGraph]].map(([k,l])=><button key={k} style={tab(tabK===k)} onClick={()=>setTabK(k)}>{l}</button>)}
-      </div>
+      {/* Desktop tab bar */}
+      {!isMobileK&&(
+        <div style={{display:"flex",gap:4,marginBottom:16,background:"#f1f5f9",borderRadius:14,padding:4}}>
+          {kidTabs.map(([k,icon,l])=>(
+            <button key={k} style={{flex:1,padding:"8px 4px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:600,fontSize:13,background:tabK===k?"#fff":"transparent",color:tabK===k?"#6366f1":"#6b7280",boxShadow:tabK===k?"0 1px 4px rgba(0,0,0,0.08)":"none",transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:3}} onClick={()=>setTabK(k)}>
+              <span style={{fontSize:18}}>{icon}</span>
+              <span>{l}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {flash&&<div style={{...card,background:flash.c,color:"#fff",fontWeight:600,textAlign:"center",padding:14}}>{flash.msg}</div>}
 
@@ -860,7 +883,7 @@ function KidPanel({data,api,refresh}) {
               const done=doneOn(c.id,selDate), avail=availOn(c,selDate), dis=done||!avail, desc=rn(c.desc,lang);
               return (
                 <div key={c.id} onClick={()=>!dis&&setChoreTarget(c)}
-                  style={{background:done?"#f0fdf4":!avail?"#f9fafb":"#fff",border:`2px solid ${done?"#bbf7d0":!avail?"#e5e7eb":"#e0e7ff"}`,borderRadius:16,padding:"16px 12px",textAlign:"center",cursor:dis?"default":"pointer",opacity:!avail?0.55:1,boxShadow:dis?"none":"0 2px 8px rgba(99,102,241,.10)",transition:"transform .15s,box-shadow .15s",position:"relative"}}
+                  style={{background:done?"linear-gradient(135deg,#f0fdf4,#dcfce7)":!avail?"#f9fafb":"#fff",border:`2px solid ${done?"#86efac":!avail?"#e5e7eb":"#c7d2fe"}`,borderRadius:18,padding:"18px 12px 14px",textAlign:"center",cursor:dis?"default":"pointer",opacity:!avail?0.5:1,boxShadow:dis?"none":"0 2px 10px rgba(99,102,241,.10)",transition:"transform .15s,box-shadow .15s",position:"relative"}}
                   onMouseEnter={e=>{if(!dis){e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(99,102,241,.18)";}}}
                   onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow=dis?"none":"0 2px 8px rgba(99,102,241,.10)";}}>
                   <div style={{fontSize:36,marginBottom:6}}>{c.emoji||"🧹"}</div>
@@ -894,7 +917,7 @@ function KidPanel({data,api,refresh}) {
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12}}>
             {rewards.map(r=>{const rName=rn(r.name,lang),rDesc=rn(r.desc,lang),ca=totalStars>=r.stars;return(
               <div key={r.id} onClick={()=>ca&&setRedeemTarget({...r,name:rName})}
-                style={{background:ca?"#fff":"#f9fafb",border:`2px solid ${ca?"#e0e7ff":"#e5e7eb"}`,borderRadius:16,padding:"16px 12px",textAlign:"center",cursor:ca?"pointer":"default",opacity:ca?1:.6,boxShadow:ca?"0 2px 8px rgba(99,102,241,.10)":"none",transition:"transform .15s,box-shadow .15s",position:"relative"}}
+                style={{background:ca?"#fff":"#f9fafb",border:`2px solid ${ca?"#c7d2fe":"#e5e7eb"}`,borderRadius:18,padding:"18px 12px 14px",textAlign:"center",cursor:ca?"pointer":"default",opacity:ca?1:.55,boxShadow:ca?"0 2px 10px rgba(99,102,241,.10)":"none",transition:"transform .15s,box-shadow .15s",position:"relative"}}
                 onMouseEnter={e=>{if(ca){e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(99,102,241,.18)";}}}
                 onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow=ca?"0 2px 8px rgba(99,102,241,.10)":"none";}}>
                 <div style={{fontSize:36,marginBottom:6}}>{r.emoji||"🎁"}</div>
@@ -943,6 +966,18 @@ function KidPanel({data,api,refresh}) {
       )}
 
       {tabK==="graph"&&<StarsGraph data={data}/>}
+
+      {/* Mobile bottom nav */}
+      {isMobileK&&(
+        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"#fff",borderTop:"1px solid #e2e8f0",display:"flex",padding:"6px 4px",paddingBottom:"calc(6px + env(safe-area-inset-bottom))",gap:2}}>
+          {kidTabs.map(([k,icon,l])=>(
+            <button key={k} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 4px",borderRadius:10,border:"none",cursor:"pointer",background:tabK===k?"#eef2ff":"transparent",color:tabK===k?"#6366f1":"#6b7280"}} onClick={()=>setTabK(k)}>
+              <span style={{fontSize:22,lineHeight:1}}>{icon}</span>
+              <span style={{fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>{l}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
