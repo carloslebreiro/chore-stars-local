@@ -78,6 +78,7 @@ const T = {
     kidProfileTitle:"My Profile", kidNameLabel:"Your name", kidEmojiLabel:"Profile emoji", kidProfileSaved:"Profile saved!",
     pastDaysLimit:"Max days back", pastDaysLimitHint:"Max number of days in the past a child can select (0 = unlimited)",
     pastDaysLimitSaved:"Setting saved!",
+    historyPageSize:"Items per page", historyPageSizeHint:"History entries shown per page (0 = show all)",
     tabStreaks:"🔥 Streaks",
     addNewStreak:"➕ Add New Streak",
     streakList:"🔥 Streak List",
@@ -179,6 +180,7 @@ const T = {
     kidProfileTitle:"O Meu Perfil", kidNameLabel:"O teu nome", kidEmojiLabel:"Emoji de perfil", kidProfileSaved:"Perfil guardado!",
     pastDaysLimit:"Máx. dias no passado", pastDaysLimitHint:"Número máximo de dias no passado que a criança pode selecionar (0 = sem limite)",
     pastDaysLimitSaved:"Definição guardada!",
+    historyPageSize:"Items por página", historyPageSizeHint:"Entradas do histórico por página (0 = mostrar tudo)",
     tabStreaks:"🔥 Sequências",
     addNewStreak:"➕ Nova Sequência",
     streakList:"🔥 Lista de Sequências",
@@ -233,7 +235,7 @@ const DEF = {
     {id:1,name:{en:"Weekly Champion",pt:"Campeão Semanal"},type:"weekly",stars:15,bonus:5,threshold:70,claims:[]},
     {id:2,name:{en:"Monthly Star",pt:"Estrela do Mês"},type:"monthly",stars:50,bonus:20,threshold:60,claims:[]},
   ],
-  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",pastDaysLimit:0,streaks:[],goalClaimLog:[],
+  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",pastDaysLimit:0,historyPageSize:20,streaks:[],goalClaimLog:[],
 };
 
 function loadData() {
@@ -334,6 +336,7 @@ function makeApi(data, setData) {
     setKidPin: pin => { commit({...data,kidPin:pin}); return Promise.resolve(); },
     setKidProfile: ({name,emoji}) => { commit({...data,kidName:name,kidEmoji:emoji}); return Promise.resolve(); },
     setPastDaysLimit: n => { commit({...data,pastDaysLimit:n}); return Promise.resolve(); },
+    setHistoryPageSize: n => { commit({...data,historyPageSize:n}); return Promise.resolve(); },
     addStreak: f => { const s={id:Date.now(),claims:[],steps:[],...f}; commit({...data,streaks:[...data.streaks,s]}); return Promise.resolve(s); },
     updateStreak:(id,f) => { commit({...data,streaks:data.streaks.map(s=>s.id===id?{...s,...f}:s)}); return Promise.resolve(); },
     deleteStreak: id => { commit({...data,streaks:data.streaks.filter(s=>s.id!==id)}); return Promise.resolve(); },
@@ -800,7 +803,7 @@ function RewardModal({reward,totalStars,t,onConfirm,onClose}) {
 // ── KidPanel ───────────────────────────────────────────────────────────────
 function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
   const t=useLang(); const lang=useContext(LangCtx);
-  const {chores,rewards,submissions,redemptions,penaltyLog=[],totalStars,goals,pastDaysLimit=0}=data;
+  const {chores,rewards,submissions,redemptions,penaltyLog=[],totalStars,goals,pastDaysLimit=0,historyPageSize=20}=data;
   const minSubmitDate = pastDaysLimit>0 ? (()=>{const d=new Date();d.setDate(d.getDate()-pastDaysLimit);return d.toISOString().split("T")[0];})() : null;
   const [tabK,setTabK]=useState("chores");
   const [selDate,setSelDate]=useState(()=>{const td=todayStr();return(minSubmitDate&&td<minSubmitDate)?minSubmitDate:td;});
@@ -809,6 +812,7 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
   const [flash,setFlash]=useState(null);
   const [ftType,setFtType]=useState("all");
   const [ftStatus,setFtStatus]=useState("all");
+  const [histPage,setHistPage]=useState(0);
   const [showChangePin,setShowChangePin]=useState(false);
   const [showEditProfile,setShowEditProfile]=useState(false);
   const [showMenu,setShowMenu]=useState(false);
@@ -831,6 +835,10 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
 
   const stripEmojiK=s=>s.replace(/^\S+\s/,"");
   const kidTabs=[["chores","🧹",stripEmojiK(t.tabChores)],["rewards","🎁",stripEmojiK(t.tabRewards)],["history","📜",stripEmojiK(t.tabHistory)],["graph","📈",stripEmojiK(t.tabGraph)]];
+  useEffect(()=>{setHistPage(0);},[ftType,ftStatus]);
+  const histPs=historyPageSize>0?historyPageSize:hist.length||1;
+  const histPages=Math.ceil(hist.length/histPs)||1;
+  const pagedHist=hist.slice(histPage*histPs,(histPage+1)*histPs);
 
   return (
     <div style={{paddingBottom:isMobileK?74:0}}>
@@ -991,14 +999,14 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
       {tabK==="history"&&(
         <div style={card}>
           <h3 style={{margin:"0 0 12px",color:"#374151"}}>{t.fullHistory}</h3>
-          <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-            <div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:4}}>
-              {[["all",t.filterAll],["chore",t.filterChores],["redemption",t.filterRedemptions],["penalty",t.filterPenalties],["bonus",t.filterBonuses]].map(([v,l])=>(<button key={v} onClick={()=>{setFtType(v);setFtStatus("all");}} style={{...tab(ftType===v),padding:"5px 10px",fontSize:12}}>{l}</button>))}
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
+            <div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:4,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+              {[["all",t.filterAll],["chore",t.filterChores],["redemption",t.filterRedemptions],["penalty",t.filterPenalties],["bonus",t.filterBonuses]].map(([v,l])=>(<button key={v} onClick={()=>{setFtType(v);setFtStatus("all");}} style={{...tab(ftType===v),padding:"5px 10px",fontSize:12,flexShrink:0}}>{l}</button>))}
             </div>
-            {ftType==="chore"&&(<div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:4}}>{[["all",t.filterAll],["pending",t.statusPending],["approved",t.statusApproved],["rejected",t.statusRejected]].map(([v,l])=>(<button key={v} onClick={()=>setFtStatus(v)} style={{...tab(ftStatus===v),padding:"5px 10px",fontSize:12,background:ftStatus===v?sc(v==="all"?"approved":v):"#f1f5f9"}}>{l}</button>))}</div>)}
+            {ftType==="chore"&&(<div style={{display:"flex",gap:4,background:"#f1f5f9",borderRadius:10,padding:4,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>{[["all",t.filterAll],["pending",t.statusPending],["approved",t.statusApproved],["rejected",t.statusRejected]].map(([v,l])=>(<button key={v} onClick={()=>setFtStatus(v)} style={{...tab(ftStatus===v),padding:"5px 10px",fontSize:12,flexShrink:0,background:ftStatus===v?sc(v==="all"?"approved":v):"#f1f5f9"}}>{l}</button>))}</div>)}
           </div>
           {!hist.length&&<p style={{color:"#9ca3af"}}>{t.nothingYet}</p>}
-          {hist.map(x=>{
+          {pagedHist.map(x=>{
             const icon=x._t==="chore"?choreEmoji(x):x._t==="redemption"?rewardEmoji(x):x._t==="streak"?"🔥":x._t==="goal"?"🏆":"⚠️";
             const name=x._t==="chore"?x.chore_name:x._t==="redemption"?x.reward_name:x._t==="streak"?t.histStreakClaim(rn(x.streakName,lang),x.milestone_days):x._t==="goal"?t.histGoalBonus(rn(x.goalName,lang)):x.penalty_name;
             const stars=x._t==="streak"||x._t==="goal"?x.bonus:x.stars;
@@ -1017,6 +1025,11 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
               </div>
             </div>);
           })}
+          {histPages>1&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:12,marginTop:4,borderTop:"1px solid #f3f4f6"}}>
+            <button onClick={()=>setHistPage(p=>Math.max(0,p-1))} disabled={histPage===0} style={{...btn("#f1f5f9","#374151"),padding:"5px 14px",fontSize:13,opacity:histPage===0?.4:1}}>←</button>
+            <span style={{fontSize:13,color:"#6b7280",fontWeight:600}}>{histPage+1} / {histPages}</span>
+            <button onClick={()=>setHistPage(p=>Math.min(histPages-1,p+1))} disabled={histPage>=histPages-1} style={{...btn("#f1f5f9","#374151"),padding:"5px 14px",fontSize:13,opacity:histPage>=histPages-1?.4:1}}>→</button>
+          </div>}
         </div>
       )}
 
@@ -1354,7 +1367,7 @@ function AdminStreaks({data,api,refresh}) {
 // ── AdminPanel ─────────────────────────────────────────────────────────────
 function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
   const t=useLang(); const lang=useContext(LangCtx);
-  const {chores,rewards,submissions,redemptions,totalStars,goals,penalties=[],penaltyLog=[]}=data;
+  const {chores,rewards,submissions,redemptions,totalStars,goals,penalties=[],penaltyLog=[],historyPageSize=20}=data;
   const [tabA,setTabA]=useState("approvals");
   const [editChoreId,setEditChoreId]=useState(null);
   const [editRewardId,setEditRewardId]=useState(null);
@@ -1365,6 +1378,9 @@ function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
   const stLabel=s=>t[`status${s[0].toUpperCase()+s.slice(1)}`]||s;
   const [acFlash,setAcFlash]=useState(null);
   const [ae,setAe]=useState({choreId:"",date:todayStr(),note:""});
+  const [appPage,setAppPage]=useState(0);
+  const [redPage,setRedPage]=useState(0);
+  useEffect(()=>{setAppPage(0);setRedPage(0);},[tabA]);
   const [aeWarn,setAeWarn]=useState(null); // null | "wrongday" | "duplicate"
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
   useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
@@ -1493,21 +1509,31 @@ function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
           </div>
         )}
 
-      {tabA==="approvals"&&(
+      {tabA==="approvals"&&(()=>{const ps=historyPageSize>0?historyPageSize:submissions.length||1;const pages=Math.ceil(submissions.length/ps)||1;const paged=submissions.slice(appPage*ps,(appPage+1)*ps);return(
         <div style={card}>
           <h3 style={{margin:"0 0 14px"}}>{t.choreSubmissions}</h3>
           {!submissions.length&&<p style={{color:"#9ca3af"}}>{t.noSubmissions}</p>}
-          {submissions.map(s=>(<div key={s.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:"1px solid #f3f4f6",gap:8,flexWrap:"wrap"}}><div style={{flex:1}}><div style={{fontWeight:600}}>{s.chore_name}</div><div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(s.submitted_at)}</div>{s.note&&<div style={{fontSize:12,color:"#6b7280",fontStyle:"italic"}}>"{s.note}"</div>}<div style={{marginTop:4}}><StarRow count={s.stars}/></div></div><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={bdg(sc(s.status))}>{stLabel(s.status)}</span>{s.status==="pending"&&(<><button style={btn("#10b981")} onClick={wrap(()=>api.approveSubmission(s.id,"approved"))}>✓</button><button style={btn("#ef4444")} onClick={wrap(()=>api.approveSubmission(s.id,"rejected"))}>✗</button></>)}</div></div>))}
+          {paged.map(s=>(<div key={s.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:"1px solid #f3f4f6",gap:8,flexWrap:"wrap"}}><div style={{flex:1}}><div style={{fontWeight:600}}>{s.chore_name}</div><div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(s.submitted_at)}</div>{s.note&&<div style={{fontSize:12,color:"#6b7280",fontStyle:"italic"}}>"{s.note}"</div>}<div style={{marginTop:4}}><StarRow count={s.stars}/></div></div><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={bdg(sc(s.status))}>{stLabel(s.status)}</span>{s.status==="pending"&&(<><button style={btn("#10b981")} onClick={wrap(()=>api.approveSubmission(s.id,"approved"))}>✓</button><button style={btn("#ef4444")} onClick={wrap(()=>api.approveSubmission(s.id,"rejected"))}>✗</button></>)}</div></div>))}
+          {pages>1&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:12,marginTop:4,borderTop:"1px solid #f3f4f6"}}>
+            <button onClick={()=>setAppPage(p=>Math.max(0,p-1))} disabled={appPage===0} style={{...btn("#f1f5f9","#374151"),padding:"5px 14px",fontSize:13,opacity:appPage===0?.4:1}}>←</button>
+            <span style={{fontSize:13,color:"#6b7280",fontWeight:600}}>{appPage+1} / {pages}</span>
+            <button onClick={()=>setAppPage(p=>Math.min(pages-1,p+1))} disabled={appPage>=pages-1} style={{...btn("#f1f5f9","#374151"),padding:"5px 14px",fontSize:13,opacity:appPage>=pages-1?.4:1}}>→</button>
+          </div>}
         </div>
-      )}
+      );})()}
 
-      {tabA==="redemptions"&&(
+      {tabA==="redemptions"&&(()=>{const ps=historyPageSize>0?historyPageSize:redemptions.length||1;const pages=Math.ceil(redemptions.length/ps)||1;const paged=redemptions.slice(redPage*ps,(redPage+1)*ps);return(
         <div style={card}>
           <h3 style={{margin:"0 0 14px"}}>{t.redemptionHistory}</h3>
           {!redemptions.length&&<p style={{color:"#9ca3af"}}>{t.noRedemptions}</p>}
-          {redemptions.map(r=>(<div key={r.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}><div><div style={{fontWeight:600}}>{r.reward_name}</div><div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(r.redeemed_at)}</div></div><span style={{color:"#ef4444",fontWeight:700}}>−{r.stars} ⭐</span></div>))}
+          {paged.map(r=>(<div key={r.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}><div><div style={{fontWeight:600}}>{r.reward_name}</div><div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(r.redeemed_at)}</div></div><span style={{color:"#ef4444",fontWeight:700}}>−{r.stars} ⭐</span></div>))}
+          {pages>1&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:12,marginTop:4,borderTop:"1px solid #f3f4f6"}}>
+            <button onClick={()=>setRedPage(p=>Math.max(0,p-1))} disabled={redPage===0} style={{...btn("#f1f5f9","#374151"),padding:"5px 14px",fontSize:13,opacity:redPage===0?.4:1}}>←</button>
+            <span style={{fontSize:13,color:"#6b7280",fontWeight:600}}>{redPage+1} / {pages}</span>
+            <button onClick={()=>setRedPage(p=>Math.min(pages-1,p+1))} disabled={redPage>=pages-1} style={{...btn("#f1f5f9","#374151"),padding:"5px 14px",fontSize:13,opacity:redPage>=pages-1?.4:1}}>→</button>
+          </div>}
         </div>
-      )}
+      );})()}
 
       {tabA==="chores"&&(
         <div>
@@ -1850,6 +1876,7 @@ function AdminSettings({data,api,refresh}) {
   const [newPin,setNewPin]=useState("");
   const [flash,setFlash]=useState(null);
   const [pastDays,setPastDays]=useState(()=>data.pastDaysLimit??0);
+  const [pageSize,setPageSize]=useState(()=>data.historyPageSize??20);
   const savePin=async()=>{
     if(!/^\d{4}$/.test(newPin))return;
     await api.setKidPin(newPin);
@@ -1860,6 +1887,12 @@ function AdminSettings({data,api,refresh}) {
   };
   const savePastDays=async()=>{
     await api.setPastDaysLimit(pastDays);
+    setFlash(t.pastDaysLimitSaved);
+    setTimeout(()=>setFlash(null),2000);
+    refresh();
+  };
+  const savePageSize=async()=>{
+    await api.setHistoryPageSize(pageSize);
     setFlash(t.pastDaysLimitSaved);
     setTimeout(()=>setFlash(null),2000);
     refresh();
@@ -1881,6 +1914,14 @@ function AdminSettings({data,api,refresh}) {
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <input type="number" min={0} max={365} value={pastDays} onChange={e=>setPastDays(Math.max(0,parseInt(e.target.value)||0))} style={{...inp,width:80}}/>
           <button style={btn()} onClick={savePastDays}>{t.saveChore}</button>
+        </div>
+      </div>
+      <div style={card}>
+        <h3 style={{margin:"0 0 4px"}}>{t.historyPageSize}</h3>
+        <p style={{margin:"0 0 14px",fontSize:13,color:"#6b7280"}}>{t.historyPageSizeHint}</p>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="number" min={0} max={200} value={pageSize} onChange={e=>setPageSize(Math.max(0,parseInt(e.target.value)||0))} style={{...inp,width:80}}/>
+          <button style={btn()} onClick={savePageSize}>{t.saveChore}</button>
         </div>
       </div>
     </div>
