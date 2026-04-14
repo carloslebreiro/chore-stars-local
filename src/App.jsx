@@ -1276,6 +1276,8 @@ function AdminPanel({data,api,refresh,onLock}) {
   const [acFlash,setAcFlash]=useState(null);
   const [ae,setAe]=useState({choreId:"",date:todayStr(),note:""});
   const [aeWarn,setAeWarn]=useState(null); // null | "wrongday" | "duplicate"
+  const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
+  useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 
   const handleAE=async(force=false)=>{
     if(!ae.choreId) return;
@@ -1294,18 +1296,58 @@ function AdminPanel({data,api,refresh,onLock}) {
 
   const stats=[{l:t.stars,v:totalStars,c:"#6366f1"},{l:t.pendingLabel,v:pending.length,c:"#f59e0b"},{l:t.choresLabel,v:chores.length,c:"#10b981"},{l:t.rewardsLabel,v:rewards.length,c:"#ec4899"},{l:"Goals",v:goals.length,c:"#0ea5e9"},{l:"Penalties",v:penalties.length,c:"#ef4444"}];
 
+  const stripEmoji=s=>s.replace(/^\S+\s/,"");
+  const navTabs=[["approvals","📋",t.approvals],["redemptions","🎁",t.redemptions],["chores","🧹",t.choresLabel],["rewards","⭐",t.rewardsLabel],["penalties","⚡",stripEmoji(t.tabPenalties)],["goals","🎯",stripEmoji(t.tabGoals)],["streaks","🔥",stripEmoji(t.tabStreaks)],["graph","📊",stripEmoji(t.tabGraph)],["settings","⚙️",stripEmoji(t.tabSettings)]];
+  const sidebarStyle=isMobile?{display:"none"}:{width:220,flexShrink:0,position:"sticky",top:16,maxHeight:"calc(100vh - 80px)",overflowY:"auto",background:"#fff",borderRadius:16,boxShadow:"0 2px 12px rgba(0,0,0,0.08)",padding:"18px 14px",display:"flex",flexDirection:"column"};
+  const sideNavItem=a=>({display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:600,fontSize:13,width:"100%",textAlign:"left",background:a?"#6366f1":"transparent",color:a?"#fff":"#374151",marginBottom:2,position:"relative"});
+  const bottomNavBarStyle={position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"#fff",borderTop:"1px solid #e2e8f0",display:"flex",overflowX:"auto",WebkitOverflowScrolling:"touch",padding:"6px 4px",paddingBottom:"calc(6px + env(safe-area-inset-bottom))",gap:2};
+  const bottomNavItemStyle=a=>({display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 10px",borderRadius:10,border:"none",cursor:"pointer",background:a?"#eef2ff":"transparent",color:a?"#6366f1":"#6b7280",flexShrink:0,minWidth:52});
+
   return (
-    <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <h2 style={{margin:0,color:"#374151"}}>{t.adminPanel}</h2>
-        <button style={btn("#ef4444")} onClick={onLock}>{t.lock}</button>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(60px,1fr))",gap:10,marginBottom:16}}>
-        {stats.map(({l,v,c})=>(<div key={l} style={{...card,textAlign:"center",padding:12,marginBottom:0}}><div style={{fontSize:22,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:10,color:"#6b7280"}}>{l}</div></div>))}
-      </div>
-      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-        {[["approvals",`${t.approvals}${pending.length?` (${pending.length})`:""}`],["redemptions",t.redemptions],["chores",t.choresLabel],["rewards",t.rewardsLabel],["penalties",t.tabPenalties],["goals",t.tabGoals],["streaks",t.tabStreaks],["graph",t.tabGraph],["settings",t.tabSettings]].map(([k,l])=>(<button key={k} style={tab(tabA===k)} onClick={()=>setTabA(k)}>{l}</button>))}
-      </div>
+    <div style={isMobile?{}:{display:"flex",alignItems:"flex-start",gap:20}}>
+
+      {/* Desktop sidebar */}
+      {!isMobile&&(
+        <div style={sidebarStyle}>
+          <div style={{fontWeight:800,fontSize:15,color:"#374151",marginBottom:10}}>{t.adminPanel}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
+            {stats.map(({l,v,c})=>(
+              <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",borderRadius:8,background:"#f8fafc"}}>
+                <span style={{fontSize:12,color:"#6b7280"}}>{l}</span>
+                <span style={{fontWeight:800,fontSize:15,color:c}}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <button style={{...btn("#ef4444"),width:"100%",marginBottom:14,display:"flex",justifyContent:"center"}} onClick={onLock}>{t.lock}</button>
+          <hr style={{border:"none",borderTop:"1px solid #f1f5f9",margin:"0 0 10px"}}/>
+          {navTabs.map(([key,icon,label])=>(
+            <button key={key} style={sideNavItem(tabA===key)} onClick={()=>setTabA(key)}>
+              <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
+              <span style={{flex:1}}>{key==="approvals"&&pending.length>0?`${label} (${pending.length})`:label}</span>
+              {key==="approvals"&&pending.length>0&&<span style={{position:"absolute",top:8,right:10,width:7,height:7,borderRadius:"50%",background:"#ef4444"}}/>}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Main content */}
+      <div style={{flex:1,minWidth:0,paddingBottom:isMobile?80:0}}>
+        {isMobile&&(
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <h2 style={{margin:0,fontSize:18,color:"#374151"}}>{t.adminPanel}</h2>
+            <button style={btn("#ef4444")} onClick={onLock}>{t.lock}</button>
+          </div>
+        )}
+        {isMobile&&(
+          <div style={{display:"flex",gap:6,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:6,marginBottom:12}}>
+            {stats.map(({l,v,c})=>(
+              <div key={l} style={{flexShrink:0,background:c+"18",border:`1.5px solid ${c}33`,borderRadius:20,padding:"4px 10px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+                <span style={{fontSize:15,fontWeight:800,color:c}}>{v}</span>
+                <span style={{fontSize:10,color:"#6b7280",whiteSpace:"nowrap"}}>{l}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
       {tabA==="approvals"&&(
         <div style={card}>
@@ -1450,6 +1492,23 @@ function AdminPanel({data,api,refresh,onLock}) {
       {tabA==="streaks"&&<AdminStreaks data={data} api={api} refresh={refresh}/>}
       {tabA==="graph"&&<StarsGraph data={data}/>}
       {tabA==="settings"&&<AdminSettings data={data} api={api} refresh={refresh}/>}
+      </div>
+
+      {/* Mobile bottom nav */}
+      {isMobile&&(
+        <div style={bottomNavBarStyle}>
+          {navTabs.map(([key,icon,label])=>(
+            <button key={key} style={bottomNavItemStyle(tabA===key)} onClick={()=>setTabA(key)}>
+              <span style={{fontSize:20,lineHeight:1,position:"relative"}}>
+                {icon}
+                {key==="approvals"&&pending.length>0&&<span style={{position:"absolute",top:-2,right:-4,width:7,height:7,borderRadius:"50%",background:"#ef4444"}}/>}
+              </span>
+              <span style={{fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>{key==="approvals"&&pending.length>0?`${label} ${pending.length}`:label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
     </div>
   );
 }
@@ -1739,7 +1798,7 @@ export default function App() {
           </div>
         </div>
         <div style={{maxWidth:"100%",padding:"16px"}}>
-          <div style={{maxWidth:640,margin:"0 auto"}}>
+          <div style={{maxWidth:view==="admin"?960:640,margin:"0 auto"}}>
             {view==="kid"?<KidPanel data={data} api={api} refresh={refresh}/>:<AdminPanel data={data} api={api} refresh={refresh} onLock={()=>{setUnlocked(false);setAdminDirect(false);setView("kid");}}/>}
           </div>
         </div>
