@@ -293,6 +293,7 @@ function makeApi(data, setData) {
     reorderChores:(fromIdx,toIdx) => { const arr=[...data.chores];const [item]=arr.splice(fromIdx,1);arr.splice(toIdx,0,item);commit({...data,chores:arr});return Promise.resolve(); },
     reorderRewards:(fromIdx,toIdx) => { const arr=[...data.rewards];const [item]=arr.splice(fromIdx,1);arr.splice(toIdx,0,item);commit({...data,rewards:arr});return Promise.resolve(); },
     addGoal:    f  => { const g={...f,id:Date.now(),claims:[]}; commit({...data,goals:[...data.goals,g]}); return Promise.resolve(g); },
+    updateGoal: (id,f) => { commit({...data,goals:data.goals.map(g=>g.id===id?{...g,...f}:g)}); return Promise.resolve(); },
     deleteGoal: id => { commit({...data,goals:data.goals.filter(g=>g.id!==id)}); return Promise.resolve(); },
     claimGoalBonus:(goalId,periodKey) => {
       const goal = data.goals.find(g=>g.id===goalId);
@@ -1077,6 +1078,8 @@ function AdminGoals({data,api,refresh}) {
   const goalClaimLog=[...(data.goalClaimLog||[])].reverse();
   const fmtPk=pk=>{if(pk.startsWith('w-')){const[,y,m,d]=pk.split('-');return`${t.goalBannerWeekly} ${d}/${parseInt(m)+1}/${y}`;}const[,y,m]=pk.split('-');return`${t.goalBannerMonthly}: ${t.monthNames[parseInt(m)]} ${y}`;};
   const [ng,setNg]=useState({name:"",type:"weekly",stars:15,bonus:5,threshold:70});
+  const [editGoalId,setEditGoalId]=useState(null);
+  const [editGoalForm,setEditGoalForm]=useState({name:"",type:"weekly",stars:15,bonus:5,threshold:70});
   const ev=useMemo(()=>evalGoals(goals,submissions),[goals,submissions]);
   const fld=(label,child,hint)=>(<div style={{marginBottom:10}}><label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:4}}>{label}</label>{child}{hint&&<div style={{fontSize:11,color:"#9ca3af",marginTop:3}}>{hint}</div>}</div>);
   return (
@@ -1097,15 +1100,34 @@ function AdminGoals({data,api,refresh}) {
         {!ev.length&&<p style={{color:"#9ca3af"}}>{t.noGoals}</p>}
         {ev.map(g=>(
           <div key={g.id} style={{padding:"14px 0",borderBottom:"1px solid #f3f4f6"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700,color:"#111827",fontSize:15}}>{rn(g.name,lang)}</div>
-                <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{g.type==="weekly"?t.goalWeekly:t.goalMonthly} · {t.goalStars}: {g.stars} ⭐ · {t.goalBonus}: +{g.bonus} ⭐ · {t.goalThreshold}: {g.threshold}%</div>
-                <div style={{marginTop:8,background:"#f1f5f9",borderRadius:99,height:8,overflow:"hidden"}}><div style={{width:`${g.pct}%`,background:g.complete?"#10b981":"#6366f1",borderRadius:99,height:"100%",transition:"width .4s"}}/></div>
-                <div style={{fontSize:12,color:"#6b7280",marginTop:4}}>{t.goalProgress(g.earned,g.stars)} · {g.pct}%{g.claimed?" · ✅":""}</div>
+            {editGoalId===g.id?(
+              <div>
+                {fld(t.goalName,<input value={editGoalForm.name} onChange={e=>setEditGoalForm(f=>({...f,name:e.target.value}))} style={inp}/>)}
+                {fld(t.goalType,<select value={editGoalForm.type} onChange={e=>setEditGoalForm(f=>({...f,type:e.target.value}))} style={{...inp,background:"#f8fafc"}}><option value="weekly">{t.goalWeekly}</option><option value="monthly">{t.goalMonthly}</option></select>)}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                  {fld(t.goalStars,<input type="number" min={1} value={editGoalForm.stars} onChange={e=>setEditGoalForm(f=>({...f,stars:parseInt(e.target.value)||1}))} style={inp}/>)}
+                  {fld(t.goalBonus,<input type="number" min={0} value={editGoalForm.bonus} onChange={e=>setEditGoalForm(f=>({...f,bonus:parseInt(e.target.value)||0}))} style={inp}/>)}
+                  {fld(t.goalThreshold,<input type="number" min={1} max={99} value={editGoalForm.threshold} onChange={e=>setEditGoalForm(f=>({...f,threshold:parseInt(e.target.value)||70}))} style={inp}/>,t.goalThresholdHint)}
+                </div>
+                <div style={{display:"flex",gap:8,marginTop:4}}>
+                  <button style={btn()} onClick={async()=>{await api.updateGoal(g.id,editGoalForm);setEditGoalId(null);refresh();}}>{t.saveChore}</button>
+                  <button style={btn("#9ca3af")} onClick={()=>setEditGoalId(null)}>{t.cancelEdit}</button>
+                </div>
               </div>
-              <button style={btn("#ef4444")} onClick={async()=>{await api.deleteGoal(g.id);refresh();}}>{t.delete}</button>
-            </div>
+            ):(
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,color:"#111827",fontSize:15}}>{rn(g.name,lang)}</div>
+                  <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{g.type==="weekly"?t.goalWeekly:t.goalMonthly} · {t.goalStars}: {g.stars} ⭐ · {t.goalBonus}: +{g.bonus} ⭐ · {t.goalThreshold}: {g.threshold}%</div>
+                  <div style={{marginTop:8,background:"#f1f5f9",borderRadius:99,height:8,overflow:"hidden"}}><div style={{width:`${g.pct}%`,background:g.complete?"#10b981":"#6366f1",borderRadius:99,height:"100%",transition:"width .4s"}}/></div>
+                  <div style={{fontSize:12,color:"#6b7280",marginTop:4}}>{t.goalProgress(g.earned,g.stars)} · {g.pct}%{g.claimed?" · ✅":""}</div>
+                </div>
+                <div style={{display:"flex",gap:6,flexShrink:0}}>
+                  <button style={btn("#6366f1")} onClick={()=>{setEditGoalId(g.id);setEditGoalForm({name:rn(g.name,lang),type:g.type,stars:g.stars,bonus:g.bonus,threshold:g.threshold});}}>✏️</button>
+                  <button style={btn("#ef4444")} onClick={async()=>{await api.deleteGoal(g.id);refresh();}}>{t.delete}</button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -1133,6 +1155,7 @@ function AdminStreaks({data,api,refresh}) {
   const{streaks,submissions,chores}=data;
   const allStreakClaims=useMemo(()=>(streaks||[]).flatMap(s=>{const choreObj=s.type==="task"?chores.find(c=>c.id===s.chore_id):null;return s.claims.map(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);return{...c,streakName:s.name,bonus:step?step.bonus:0,choreObj};});}).sort((a,b)=>new Date(b.awarded_at)-new Date(a.awarded_at)),[streaks,chores]);
   const[showForm,setShowForm]=useState(false);
+  const[editId,setEditId]=useState(null);
   const[form,setForm]=useState({name:"",type:"general",chore_id:null,steps:[]});
   const ev=useMemo(()=>evalStreaks(streaks,submissions,chores),[streaks,submissions,chores]);
   const addStep=()=>setForm(f=>({...f,steps:[...f.steps,{days:7,bonus:3}]}));
@@ -1141,14 +1164,15 @@ function AdminStreaks({data,api,refresh}) {
   const handleSave=async()=>{
     if(!form.name.trim()) return;
     const steps=[...form.steps].sort((a,b)=>a.days-b.days);
-    await api.addStreak({name:form.name,type:form.type,chore_id:form.type==="task"?form.chore_id:null,steps});
+    if(editId){await api.updateStreak(editId,{name:form.name,type:form.type,chore_id:form.type==="task"?form.chore_id:null,steps});setEditId(null);}
+    else{await api.addStreak({name:form.name,type:form.type,chore_id:form.type==="task"?form.chore_id:null,steps});}
     setForm({name:"",type:"general",chore_id:null,steps:[]});setShowForm(false);refresh();
   };
   return(
     <div>
       <div style={card}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showForm?14:0}}>
-          <h3 style={{margin:0}}>{t.addNewStreak}</h3>
+          <h3 style={{margin:0}}>{editId?t.editChore:t.addNewStreak}</h3>
           {!showForm&&<button style={btn("#f97316")} onClick={()=>setShowForm(true)}>+ {t.add}</button>}
         </div>
         {showForm&&(
@@ -1188,7 +1212,7 @@ function AdminStreaks({data,api,refresh}) {
             </div>
             <div style={{display:"flex",gap:8}}>
               <button style={btn("#f97316")} onClick={handleSave}>{t.saveChore}</button>
-              <button style={btn("#9ca3af")} onClick={()=>setShowForm(false)}>{t.cancelEdit}</button>
+              <button style={btn("#9ca3af")} onClick={()=>{setShowForm(false);setEditId(null);}}>{t.cancelEdit}</button>
             </div>
           </div>
         )}
@@ -1207,7 +1231,10 @@ function AdminStreaks({data,api,refresh}) {
                   {s.sortedSteps.length>0&&<div style={{fontSize:12,color:"#f97316",marginTop:4}}>{s.sortedSteps.map(st=>`${st.days}d→${st.bonus}⭐`).join(" · ")}</div>}
                   {s.alive&&s.effectiveStreak>0&&<div style={{fontSize:12,color:"#10b981",marginTop:2}}>🔥 Current: {s.effectiveStreak} days{s.claimableStep?` · Milestone ready: +${s.claimableStep.bonus}⭐`:""}</div>}
                 </div>
-                <button style={btn("#ef4444")} onClick={async()=>{await api.deleteStreak(s.id);refresh();}}>{t.delete}</button>
+                <div style={{display:"flex",gap:6,flexShrink:0}}>
+                  <button style={btn("#6366f1")} onClick={()=>{setEditId(s.id);setShowForm(true);setForm({name:rn(s.name,lang),type:s.type,chore_id:s.chore_id,steps:[...s.steps]});}}>✏️</button>
+                  <button style={btn("#ef4444")} onClick={async()=>{await api.deleteStreak(s.id);refresh();}}>{t.delete}</button>
+                </div>
               </div>
             </div>
           );
