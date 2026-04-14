@@ -798,7 +798,7 @@ function RewardModal({reward,totalStars,t,onConfirm,onClose}) {
 }
 
 // ── KidPanel ───────────────────────────────────────────────────────────────
-function KidPanel({data,api,refresh}) {
+function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
   const t=useLang(); const lang=useContext(LangCtx);
   const {chores,rewards,submissions,redemptions,penaltyLog=[],totalStars,goals,pastDaysLimit=0}=data;
   const minSubmitDate = pastDaysLimit>0 ? (()=>{const d=new Date();d.setDate(d.getDate()-pastDaysLimit);return d.toISOString().split("T")[0];})() : null;
@@ -811,6 +811,7 @@ function KidPanel({data,api,refresh}) {
   const [ftStatus,setFtStatus]=useState("all");
   const [showChangePin,setShowChangePin]=useState(false);
   const [showEditProfile,setShowEditProfile]=useState(false);
+  const [showMenu,setShowMenu]=useState(false);
   const [isMobileK,setIsMobileK]=useState(()=>window.innerWidth<768);
   useEffect(()=>{const h=()=>setIsMobileK(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 
@@ -838,25 +839,79 @@ function KidPanel({data,api,refresh}) {
       {showChangePin&&<KidChangePinModal api={api} refresh={refresh} onClose={(msg)=>{setShowChangePin(false);if(msg)showFlash(msg);}}/>}
       {showEditProfile&&<KidProfileModal kidName={data.kidName||""} kidEmoji={data.kidEmoji||"👧🏽"} api={api} refresh={refresh} onClose={(msg)=>{setShowEditProfile(false);if(msg)showFlash(msg);}}/>}
 
-      {/* Hero header */}
-      <div style={{...card,background:"linear-gradient(135deg,#4f46e5 0%,#7c3aed 55%,#9333ea 100%)",color:"#fff",textAlign:"center",position:"relative",padding:"24px 20px 18px",overflow:"hidden",marginBottom:16}}>
-        <div style={{position:"absolute",top:-40,right:-40,width:140,height:140,borderRadius:"50%",background:"rgba(255,255,255,0.06)",pointerEvents:"none"}}/>
-        <div style={{position:"absolute",bottom:-24,left:-24,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.04)",pointerEvents:"none"}}/>
-        <button onClick={()=>setShowChangePin(true)} style={{position:"absolute",top:12,right:12,background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"5px 10px",cursor:"pointer",color:"#fff",fontSize:13,fontWeight:600}}>🔑</button>
-        <button onClick={()=>setShowEditProfile(true)} style={{position:"absolute",top:12,left:12,background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"5px 10px",cursor:"pointer",color:"#fff",fontSize:13,fontWeight:600}}>✏️</button>
-        <div style={{fontSize:44,lineHeight:1,marginBottom:4}}>{data.kidEmoji||"👧🏽"}</div>
-        {data.kidName&&<div style={{fontSize:16,fontWeight:700,opacity:.9,marginBottom:12}}>{data.kidName}</div>}
-        <div style={{display:"inline-flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.13)",borderRadius:20,padding:"10px 24px",marginBottom:8}}>
-          <span style={{fontSize:34,lineHeight:1}}>⭐</span>
-          <span style={{fontSize:54,fontWeight:900,lineHeight:1,letterSpacing:"-1px"}}>{totalStars}</span>
-        </div>
-        <div style={{fontSize:13,opacity:.8,marginBottom:10}}>{t.starsAvailable}</div>
-        <div style={{display:"flex",justifyContent:"center",gap:14,fontSize:12,opacity:.72}}>
-          <span>✅ {submissions.filter(s=>s.status==="approved").length} {t.completed}</span>
-          <span>·</span>
-          <span>⏳ {submissions.filter(s=>s.status==="pending").length} {t.pending}</span>
+      {/* Compact header */}
+      <div style={{...card,background:"linear-gradient(135deg,#4f46e5 0%,#7c3aed 55%,#9333ea 100%)",color:"#fff",position:"relative",padding:"14px 16px",overflow:"hidden",marginBottom:16}}>
+        <div style={{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.06)",pointerEvents:"none"}}/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
+            <span style={{fontSize:34,lineHeight:1,flexShrink:0}}>{data.kidEmoji||"👧🏽"}</span>
+            <div style={{minWidth:0}}>
+              {data.kidName&&<div style={{fontWeight:700,fontSize:15,opacity:.95,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{data.kidName}</div>}
+              <div style={{fontSize:11,opacity:.7,marginTop:1}}>✅ {submissions.filter(s=>s.status==="approved").length} · ⏳ {submissions.filter(s=>s.status==="pending").length}</div>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.14)",borderRadius:14,padding:"6px 14px"}}>
+              <span style={{fontSize:18}}>⭐</span>
+              <span style={{fontSize:26,fontWeight:900,lineHeight:1}}>{totalStars}</span>
+            </div>
+            <button onClick={()=>setShowMenu(m=>!m)} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"7px 11px",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1}}>☰</button>
+          </div>
         </div>
       </div>
+
+      {/* Burger menu drawer */}
+      {showMenu&&(
+        <div style={{position:"fixed",inset:0,zIndex:200}} onClick={()=>setShowMenu(false)}>
+          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.45)"}}/>
+          <div style={{position:"absolute",top:0,right:0,bottom:0,width:"min(290px,88vw)",background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,.15)",display:"flex",flexDirection:"column",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{background:"linear-gradient(135deg,#4f46e5,#7c3aed)",padding:"18px 18px 14px",color:"#fff",flexShrink:0}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <span style={{fontSize:36}}>{data.kidEmoji||"👧🏽"}</span>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16}}>{data.kidName||"Kid"}</div>
+                    <div style={{fontSize:12,opacity:.8}}>{totalStars} ⭐ {t.starsAvailable}</div>
+                  </div>
+                </div>
+                <button onClick={()=>setShowMenu(false)} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:8,padding:"5px 9px",cursor:"pointer",color:"#fff",fontSize:14,lineHeight:1}}>✕</button>
+              </div>
+            </div>
+            <div style={{flex:1,padding:"10px 8px",overflowY:"auto"}}>
+              <div style={{padding:"8px 10px 6px",fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",letterSpacing:".6px"}}>{lang==="pt"?"Idioma":"Language"}</div>
+              <div style={{display:"flex",gap:6,padding:"0 10px 14px"}}>
+                {[{code:"en",flag:"🇬🇧",name:"English"},{code:"pt",flag:"🇵🇹",name:"Português"}].map(({code,flag,name})=>(
+                  <button key={code} onClick={()=>setLang&&setLang(code)} style={{flex:1,padding:"8px 6px",borderRadius:10,border:`2px solid ${lang===code?"#6366f1":"#e5e7eb"}`,background:lang===code?"#eef2ff":"#f9fafb",cursor:"pointer",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+                    <span style={{fontSize:18}}>{flag}</span>
+                    <span style={{color:lang===code?"#6366f1":"#374151"}}>{name}</span>
+                  </button>
+                ))}
+              </div>
+              <div style={{height:1,background:"#f3f4f6",margin:"0 10px 10px"}}/>
+              <div style={{padding:"4px 10px 6px",fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",letterSpacing:".6px"}}>{lang==="pt"?"Perfil":"Profile"}</div>
+              {[
+                {icon:"✏️",label:lang==="pt"?"Editar Perfil":"Edit Profile",action:()=>{setShowMenu(false);setShowEditProfile(true);}},
+                {icon:"🔑",label:lang==="pt"?"Alterar PIN":"Change PIN",action:()=>{setShowMenu(false);setShowChangePin(true);}},
+              ].map(({icon,label,action})=>(
+                <button key={label} onClick={action} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:"none",background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:14,color:"#374151",fontWeight:500,textAlign:"left"}}>
+                  <span style={{fontSize:20,width:28,textAlign:"center"}}>{icon}</span><span>{label}</span>
+                </button>
+              ))}
+              <div style={{height:1,background:"#f3f4f6",margin:"6px 10px 10px"}}/>
+              <div style={{padding:"4px 10px 6px",fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",letterSpacing:".6px"}}>{lang==="pt"?"Conta":"Account"}</div>
+              {[
+                {icon:data.kidEmoji||"👧🏽",label:data.kidName||t.kidTab,color:"#6366f1",action:()=>setShowMenu(false)},
+                {icon:"🛡️",label:t.adminTab,color:"#374151",action:()=>{setShowMenu(false);onGoAdmin&&onGoAdmin();}},
+                {icon:"🚪",label:t.kidLogout,color:"#ef4444",action:()=>{setShowMenu(false);onLogout&&onLogout();}},
+              ].map(({icon,label,color,action})=>(
+                <button key={label} onClick={action} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:"none",background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:14,color,fontWeight:500,textAlign:"left"}}>
+                  <span style={{fontSize:20,width:28,textAlign:"center"}}>{icon}</span><span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <GoalBanners goals={goals} submissions={submissions} api={api} refresh={refresh}/>
       {data.streaks&&data.streaks.length>0&&<StreakBanners data={data} api={api} refresh={refresh}/>}
@@ -1297,7 +1352,7 @@ function AdminStreaks({data,api,refresh}) {
 }
 
 // ── AdminPanel ─────────────────────────────────────────────────────────────
-function AdminPanel({data,api,refresh,onLock}) {
+function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
   const t=useLang(); const lang=useContext(LangCtx);
   const {chores,rewards,submissions,redemptions,totalStars,goals,penalties=[],penaltyLog=[]}=data;
   const [tabA,setTabA]=useState("approvals");
@@ -1313,6 +1368,7 @@ function AdminPanel({data,api,refresh,onLock}) {
   const [aeWarn,setAeWarn]=useState(null); // null | "wrongday" | "duplicate"
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
   useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+  const [showMenu,setShowMenu]=useState(false);
 
   const handleAE=async(force=false)=>{
     if(!ae.choreId) return;
@@ -1332,7 +1388,7 @@ function AdminPanel({data,api,refresh,onLock}) {
   const stats=[{l:t.stars,v:totalStars,c:"#6366f1"},{l:t.pendingLabel,v:pending.length,c:"#f59e0b"},{l:t.choresLabel,v:chores.length,c:"#10b981"},{l:t.rewardsLabel,v:rewards.length,c:"#ec4899"},{l:"Goals",v:goals.length,c:"#0ea5e9"},{l:"Penalties",v:penalties.length,c:"#ef4444"}];
 
   const stripEmoji=s=>s.replace(/^\S+\s/,"");
-  const navTabs=[["approvals","📋",t.approvals],["redemptions","🎁",t.redemptions],["chores","🧹",t.choresLabel],["rewards","⭐",t.rewardsLabel],["penalties","⚡",stripEmoji(t.tabPenalties)],["goals","🎯",stripEmoji(t.tabGoals)],["streaks","🔥",stripEmoji(t.tabStreaks)],["graph","📊",stripEmoji(t.tabGraph)],["settings","⚙️",stripEmoji(t.tabSettings)]];
+  const navTabs=[["approvals","📋",t.approvals],["redemptions","🎁",t.redemptions],["chores","🧹",t.choresLabel],["rewards","⭐",t.rewardsLabel],["penalties","⚡",stripEmoji(t.tabPenalties)],["goals","🎯",stripEmoji(t.tabGoals)],["streaks","🔥",stripEmoji(t.tabStreaks)],["graph","📊",stripEmoji(t.tabGraph)]];
   const sidebarStyle=isMobile?{display:"none"}:{width:220,flexShrink:0,position:"sticky",top:16,maxHeight:"calc(100vh - 80px)",overflowY:"auto",background:"#fff",borderRadius:16,boxShadow:"0 2px 12px rgba(0,0,0,0.08)",padding:"18px 14px",display:"flex",flexDirection:"column"};
   const sideNavItem=a=>({display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:600,fontSize:13,width:"100%",textAlign:"left",background:a?"#6366f1":"transparent",color:a?"#fff":"#374151",marginBottom:2,position:"relative"});
   const bottomNavBarStyle={position:"fixed",bottom:0,left:0,right:0,zIndex:50,background:"#fff",borderTop:"1px solid #e2e8f0",display:"flex",overflowX:"auto",WebkitOverflowScrolling:"touch",padding:"6px 4px",paddingBottom:"calc(6px + env(safe-area-inset-bottom))",gap:2};
@@ -1341,10 +1397,60 @@ function AdminPanel({data,api,refresh,onLock}) {
   return (
     <div style={isMobile?{}:{display:"flex",alignItems:"flex-start",gap:20}}>
 
+      {/* Burger menu drawer */}
+      {showMenu&&(
+        <div style={{position:"fixed",inset:0,zIndex:200}} onClick={()=>setShowMenu(false)}>
+          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.45)"}}/>
+          <div style={{position:"absolute",top:0,right:0,bottom:0,width:"min(290px,88vw)",background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,.15)",display:"flex",flexDirection:"column",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",padding:"18px 18px 14px",color:"#fff",flexShrink:0}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <span style={{fontSize:30}}>🛡️</span>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16}}>{t.adminPanel}</div>
+                    <div style={{fontSize:12,opacity:.8}}>{totalStars} ⭐</div>
+                  </div>
+                </div>
+                <button onClick={()=>setShowMenu(false)} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:8,padding:"5px 9px",cursor:"pointer",color:"#fff",fontSize:14,lineHeight:1}}>✕</button>
+              </div>
+            </div>
+            <div style={{flex:1,padding:"10px 8px",overflowY:"auto"}}>
+              <div style={{padding:"8px 10px 6px",fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",letterSpacing:".6px"}}>{lang==="pt"?"Idioma":"Language"}</div>
+              <div style={{display:"flex",gap:6,padding:"0 10px 14px"}}>
+                {[{code:"en",flag:"🇬🇧",name:"English"},{code:"pt",flag:"🇵🇹",name:"Português"}].map(({code,flag,name})=>(
+                  <button key={code} onClick={()=>setLang&&setLang(code)} style={{flex:1,padding:"8px 6px",borderRadius:10,border:`2px solid ${lang===code?"#6366f1":"#e5e7eb"}`,background:lang===code?"#eef2ff":"#f9fafb",cursor:"pointer",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+                    <span style={{fontSize:18}}>{flag}</span>
+                    <span style={{color:lang===code?"#6366f1":"#374151"}}>{name}</span>
+                  </button>
+                ))}
+              </div>
+              <div style={{height:1,background:"#f3f4f6",margin:"0 10px 10px"}}/>
+              <div style={{padding:"4px 10px 6px",fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",letterSpacing:".6px"}}>{lang==="pt"?"Definições":"Settings"}</div>
+              <button onClick={()=>{setShowMenu(false);setTabA("settings");}} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:"none",background:tabA==="settings"?"#eef2ff":"transparent",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:14,color:tabA==="settings"?"#6366f1":"#374151",fontWeight:500,textAlign:"left"}}>
+                <span style={{fontSize:20,width:28,textAlign:"center"}}>⚙️</span><span>{stripEmoji(t.tabSettings)}</span>
+              </button>
+              <div style={{height:1,background:"#f3f4f6",margin:"6px 10px 10px"}}/>
+              <div style={{padding:"4px 10px 6px",fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",letterSpacing:".6px"}}>{lang==="pt"?"Conta":"Account"}</div>
+              {[
+                {icon:data.kidEmoji||"👧🏽",label:data.kidName||t.kidTab,color:"#374151",action:()=>{setShowMenu(false);onGoKid&&onGoKid();}},
+                {icon:"🚪",label:t.kidLogout,color:"#ef4444",action:()=>{setShowMenu(false);onLogout&&onLogout();}},
+              ].map(({icon,label,color,action})=>(
+                <button key={label} onClick={action} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:"none",background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:14,color,fontWeight:500,textAlign:"left"}}>
+                  <span style={{fontSize:20,width:28,textAlign:"center"}}>{icon}</span><span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Desktop sidebar */}
       {!isMobile&&(
         <div style={sidebarStyle}>
-          <div style={{fontWeight:800,fontSize:15,color:"#374151",marginBottom:10}}>{t.adminPanel}</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{fontWeight:800,fontSize:15,color:"#374151"}}>{t.adminPanel}</div>
+            <button onClick={()=>setShowMenu(m=>!m)} style={{background:"#f1f5f9",border:"none",borderRadius:8,padding:"5px 8px",cursor:"pointer",fontSize:15,lineHeight:1,color:"#6b7280"}}>☰</button>
+          </div>
           <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
             {stats.map(({l,v,c})=>(
               <div key={l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",borderRadius:8,background:"#f8fafc"}}>
@@ -1370,7 +1476,10 @@ function AdminPanel({data,api,refresh,onLock}) {
         {isMobile&&(
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
             <h2 style={{margin:0,fontSize:18,color:"#374151"}}>{t.adminPanel}</h2>
-            <button style={btn("#ef4444")} onClick={onLock}>{t.lock}</button>
+            <div style={{display:"flex",gap:8}}>
+              <button style={btn("#ef4444")} onClick={onLock}>{t.lock}</button>
+              <button onClick={()=>setShowMenu(m=>!m)} style={{background:"#f1f5f9",border:"none",borderRadius:10,padding:"7px 11px",cursor:"pointer",fontSize:18,lineHeight:1,color:"#374151"}}>☰</button>
+            </div>
           </div>
         )}
         {isMobile&&(
@@ -1824,17 +1933,10 @@ export default function App() {
         {showPin&&<PinModal api={api} onSuccess={()=>{setUnlocked(true);setShowPin(false);setView("admin");}} onCancel={()=>setShowPin(false)}/>}
         <div style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
           <div style={{color:"#fff",fontWeight:800,fontSize:"clamp(16px,4vw,22px)",whiteSpace:"nowrap"}}>⭐ {t.appTitle}</div>
-          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>
-            <LangSwitcher lang={lang} setLang={setLang}/>
-            <div style={{width:1,height:28,background:"rgba(255,255,255,.3)"}}/>
-            <button style={{...btn(view==="kid"?"#fff":"rgba(255,255,255,.25)",view==="kid"?"#6366f1":"#fff")}} onClick={()=>setView("kid")}>{data.kidEmoji||"👧🏽"} {data.kidName||t.kidTab}</button>
-            <button style={{...btn(view==="admin"?"#fff":"rgba(255,255,255,.25)",view==="admin"?"#6366f1":"#fff")}} onClick={()=>{if(unlocked)setView("admin");else setShowPin(true);}}>🛡️ {t.adminTab}</button>
-            <button style={{...btn("rgba(255,255,255,.15)","#fff"),fontSize:11,padding:"6px 10px"}} onClick={()=>{localStorage.removeItem("chore-stars-kid-auth");setKidLoggedIn(false);setAdminDirect(false);setUnlocked(false);setView("kid");}}>🚪 {t.kidLogout}</button>
-          </div>
         </div>
         <div style={{maxWidth:"100%",padding:"16px"}}>
           <div style={{maxWidth:view==="admin"?960:640,margin:"0 auto"}}>
-            {view==="kid"?<KidPanel data={data} api={api} refresh={refresh}/>:<AdminPanel data={data} api={api} refresh={refresh} onLock={()=>{setUnlocked(false);setAdminDirect(false);setView("kid");}}/>}
+            {view==="kid"?<KidPanel data={data} api={api} refresh={refresh} setLang={setLang} onGoAdmin={()=>{if(unlocked)setView("admin");else setShowPin(true);}} onLogout={()=>{localStorage.removeItem("chore-stars-kid-auth");setKidLoggedIn(false);setAdminDirect(false);setUnlocked(false);setView("kid");}}/>:<AdminPanel data={data} api={api} refresh={refresh} onLock={()=>{setUnlocked(false);setAdminDirect(false);setView("kid");}} setLang={setLang} onGoKid={()=>setView("kid")} onLogout={()=>{localStorage.removeItem("chore-stars-kid-auth");setKidLoggedIn(false);setAdminDirect(false);setUnlocked(false);setView("kid");}}/>}
           </div>
         </div>
       </div>
