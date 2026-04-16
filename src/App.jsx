@@ -18,7 +18,7 @@ const T = {
     needMore:(n)=>`Need ${n} more ⭐`, redeem:"Redeem",
     redeemReward:"Redeem Reward?", costs:"Costs", youHave:"you have",
     yesRedeem:"Yes, redeem!", cancel:"Cancel",
-    redeemSuccess:(n,s)=>`🎁 "${n}" redeemed! −${s} ⭐`, notEnoughStars:"❌ Not enough stars!",
+    redeemSuccess:(n,s,ss)=>`🎁 "${n}" redeemed! −${s} ⭐${ss>0?` −${ss} ✨`:""}`, notEnoughStars:"❌ Not enough stars!",
     fullHistory:"Full History", nothingYet:"Nothing yet!",
     adminPanel:"Admin Panel", lock:"Lock 🔒",
     stars:"Stars", pendingLabel:"Pending", choresLabel:"Chores", rewardsLabel:"Rewards",
@@ -42,15 +42,15 @@ const T = {
     addGoal:"Add Goal", goalList:"Goal List", noGoals:"No goals defined yet.",
     goalProgress:(c,t)=>`${c} / ${t} ⭐`, goalBannerWeekly:"weekly", goalBannerMonthly:"monthly",
     goalBannerMsg:(name,pct,type,rem,bonus)=>`🎯 You're ${pct}% of the way to your ${type} goal "${name}"! Just ${rem} more ⭐ to earn ${bonus} bonus stars!`,
-    goalCompleteMsg:(name,bonus)=>`🏆 You completed the goal "${name}" and earned ${bonus} bonus ⭐! Amazing!`,
+    goalCompleteMsg:(name,bonus,superBonus)=>`🏆 You completed the goal "${name}" and earned ${bonus} bonus ⭐${superBonus>0?` + ${superBonus} ✨`:""}! Amazing!`,
     goalThresholdHint:"Show banner when this % of the goal is reached",
     tabPenalties:"⚠️ Penalties", penaltyName:"Penalty name", penaltyStars:"Stars to deduct",
     addNewPenalty:"➕ Add New Penalty", penaltyList:"📋 Penalty List", noPenalties:"No penalties defined yet.",
     applyPenalty:"Apply Penalty", penaltyPickReason:"— Pick a penalty —",
-    penaltyApplied:(n,s)=>`⚠️ Penalty "${n}" applied. −${s} ⭐`,
+    penaltyApplied:(n,s,ss)=>`⚠️ Penalty "${n}" applied. −${s} ⭐${ss>0?` −${ss} ✨`:""}`,
     penaltyHistory:"⚠️ Penalty History", noPenaltyHistory:"No penalties applied yet.",
     penaltyNote:"Optional reason",
-    confirmPenalty:(n,s)=>`Apply penalty "${n}" and deduct ${s} ⭐?`,
+    confirmPenalty:(n,s,ss)=>`Apply penalty "${n}" and deduct ${s} ⭐${ss>0?` + ${ss} ✨`:""}?`,
     adminApplyPenaltyTitle:"⚠️ Apply Penalty",
     continueAnyway:"Continue anyway",
     duplicateDay:"This task already exists for this day",
@@ -92,17 +92,21 @@ const T = {
     addStep:"+ Add Step",
     streakCurrent:(n)=>`🔥 ${n}-day streak!`,
     streakNextMilestone:(rem,bonus)=>`${rem} more days → +${bonus} ⭐`,
-    streakMilestoneClaim:(bonus)=>`+${bonus} ⭐ Claim!`,
-    streakClaimSuccess:(bonus)=>`🔥 +${bonus} ⭐ streak bonus claimed!`,
-    streakAutoClaimed:(n,bonus)=>`🔥 Your ${n}-day streak ended — +${bonus} ⭐ auto-awarded!`,
+    streakMilestoneClaim:(bonus,superBonus)=>`+${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} Claim!`,
+    streakClaimSuccess:(bonus,superBonus)=>`🔥 +${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} streak bonus claimed!`,
+    streakAutoClaimed:(n,bonus,superBonus)=>`🔥 Your ${n}-day streak ended — +${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} auto-awarded!`,
     streakBroken:"Start a new streak!",
     filterBonuses:"Bonuses",
     histStreakClaim:(name,days)=>`🔥 ${name} – ${days}-day streak`,
     histGoalBonus:name=>`🏆 Goal: ${name}`,
-    streakAutoClaimedMax:(n,bonus)=>`🏆 ${n}-day streak max milestone — +${bonus} ⭐ auto-awarded!`,
+    streakAutoClaimedMax:(n,bonus,superBonus)=>`🏆 ${n}-day streak max milestone — +${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} auto-awarded!`,
     adminGoalClaimHistory:"🏆 Goal Claim History",
     adminStreakClaimHistory:"🔥 Streak Claim History",
     noClaims:"No claims yet.",
+    superStarsAvailable:"Super Stars",
+    notEnoughSuperStars:"❌ Not enough super stars!",
+    superBonusLabel:"Bonus ✨",
+    needMoreSuper:(n)=>`Need ${n} more ✨`,
   },
   pt: {
     appTitle:"Estrelas das Tarefas", kidTab:"Criança", adminTab:"Admin",
@@ -120,7 +124,7 @@ const T = {
     needMore:(n)=>`Precisas de mais ${n} ⭐`, redeem:"Resgatar",
     redeemReward:"Resgatar Recompensa?", costs:"Custa", youHave:"tens",
     yesRedeem:"Sim, resgatar!", cancel:"Cancelar",
-    redeemSuccess:(n,s)=>`🎁 "${n}" resgatada! −${s} ⭐`, notEnoughStars:"❌ Estrelas insuficientes!",
+    redeemSuccess:(n,s,ss)=>`🎁 "${n}" resgatada! −${s} ⭐${ss>0?` −${ss} ✨`:""}`, notEnoughStars:"❌ Estrelas insuficientes!",
     fullHistory:"Histórico Completo", nothingYet:"Ainda nada!",
     adminPanel:"Painel de Admin", lock:"Bloquear 🔒",
     stars:"Estrelas", pendingLabel:"Pendentes", choresLabel:"Tarefas", rewardsLabel:"Recompensas",
@@ -144,15 +148,15 @@ const T = {
     addGoal:"Adicionar Objetivo", goalList:"Lista de Objetivos", noGoals:"Ainda não há objetivos definidos.",
     goalProgress:(c,tgt)=>`${c} / ${tgt} ⭐`, goalBannerWeekly:"semanal", goalBannerMonthly:"mensal",
     goalBannerMsg:(name,pct,type,rem,bonus)=>`🎯 Estás a ${pct}% do teu objetivo ${type} "${name}"! Só mais ${rem} ⭐ para ganhares ${bonus} estrelas bónus!`,
-    goalCompleteMsg:(name,bonus)=>`🏆 Completaste o objetivo "${name}" e ganhaste ${bonus} ⭐ bónus! Fantástico!`,
+    goalCompleteMsg:(name,bonus,superBonus)=>`🏆 Completaste o objetivo "${name}" e ganhaste ${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} bónus! Fantástico!`,
     goalThresholdHint:"Mostrar aviso quando esta % da meta for atingida",
     tabPenalties:"⚠️ Penalizações", penaltyName:"Nome da penalização", penaltyStars:"Estrelas a deduzir",
     addNewPenalty:"➕ Adicionar Nova Penalização", penaltyList:"📋 Lista de Penalizações", noPenalties:"Ainda não há penalizações definidas.",
     applyPenalty:"Aplicar Penalização", penaltyPickReason:"— Escolhe uma penalização —",
-    penaltyApplied:(n,s)=>`⚠️ Penalização "${n}" aplicada. −${s} ⭐`,
+    penaltyApplied:(n,s,ss)=>`⚠️ Penalização "${n}" aplicada. −${s} ⭐${ss>0?` −${ss} ✨`:""}`,
     penaltyHistory:"⚠️ Histórico de Penalizações", noPenaltyHistory:"Sem penalizações aplicadas.",
     penaltyNote:"Motivo opcional",
-    confirmPenalty:(n,s)=>`Aplicar penalização "${n}" e deduzir ${s} ⭐?`,
+    confirmPenalty:(n,s,ss)=>`Aplicar penalização "${n}" e deduzir ${s} ⭐${ss>0?` + ${ss} ✨`:""}?`,
     adminApplyPenaltyTitle:"⚠️ Aplicar Penalização",
     continueAnyway:"Continuar assim mesmo",
     duplicateDay:"Esta tarefa já existe para este dia",
@@ -194,17 +198,21 @@ const T = {
     addStep:"+ Adicionar Marco",
     streakCurrent:(n)=>`🔥 Sequência de ${n} dias!`,
     streakNextMilestone:(rem,bonus)=>`Mais ${rem} dias → +${bonus} ⭐`,
-    streakMilestoneClaim:(bonus)=>`+${bonus} ⭐ Reclamar!`,
-    streakClaimSuccess:(bonus)=>`🔥 +${bonus} ⭐ bónus de sequência ganho!`,
-    streakAutoClaimed:(n,bonus)=>`🔥 A tua sequência de ${n} dias terminou — +${bonus} ⭐ atribuídos automaticamente!`,
+    streakMilestoneClaim:(bonus,superBonus)=>`+${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} Reclamar!`,
+    streakClaimSuccess:(bonus,superBonus)=>`🔥 +${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} bónus de sequência ganho!`,
+    streakAutoClaimed:(n,bonus,superBonus)=>`🔥 A tua sequência de ${n} dias terminou — +${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} atribuídos automaticamente!`,
     streakBroken:"Começa uma nova sequência!",
     filterBonuses:"Bónus",
     histStreakClaim:(name,days)=>`🔥 ${name} – sequência de ${days} dias`,
     histGoalBonus:name=>`🏆 Objetivo: ${name}`,
-    streakAutoClaimedMax:(n,bonus)=>`🏆 Sequência de ${n} dias — marco máximo! +${bonus} ⭐ atribuídos automaticamente!`,
+    streakAutoClaimedMax:(n,bonus,superBonus)=>`🏆 Sequência de ${n} dias — marco máximo! +${bonus} ⭐${superBonus>0?` + ${superBonus} ✨`:""} atribuídos automaticamente!`,
     adminGoalClaimHistory:"🏆 Histórico de Bónus de Objetivos",
     adminStreakClaimHistory:"🔥 Histórico de Marcos de Sequências",
     noClaims:"Ainda não há reivindicações.",
+    superStarsAvailable:"Super Estrelas",
+    notEnoughSuperStars:"❌ Super estrelas insuficientes!",
+    superBonusLabel:"Bónus ✨",
+    needMoreSuper:(n)=>`Precisas de mais ${n} ✨`,
   },
 };
 
@@ -221,30 +229,33 @@ const DEF = {
     {id:4,name:{en:"Tidy room",pt:"Arrumar o quarto"},emoji:"🧹",desc:{en:"Clean and organise your bedroom",pt:"Limpar e organizar o quarto"},stars:4,weekdays:[0,6]},
   ],
   rewards:[
-    {id:1,name:{en:"Extra screen time (30 min)",pt:"Tempo de ecrã extra (30 min)"},emoji:"📱",desc:{en:"30 minutes of extra tablet or TV time",pt:"30 minutos extra de tablet ou TV"},stars:5},
-    {id:2,name:{en:"Choose dinner",pt:"Escolher o jantar"},emoji:"🍕",desc:{en:"Pick whatever you want for dinner tonight",pt:"Escolhe o que quiseres para o jantar"},stars:8},
-    {id:3,name:{en:"Stay up late",pt:"Ficar acordado mais tarde"},emoji:"🌙",desc:{en:"Stay up 30 minutes past bedtime",pt:"Ficar acordado 30 minutos depois da hora"},stars:10},
-    {id:4,name:{en:"Trip to the park",pt:"Ida ao parque"},emoji:"🌳",desc:{en:"A fun trip to your favourite park",pt:"Uma ida divertida ao teu parque favorito"},stars:15},
+    {id:1,name:{en:"Extra screen time (30 min)",pt:"Tempo de ecrã extra (30 min)"},emoji:"📱",desc:{en:"30 minutes of extra tablet or TV time",pt:"30 minutos extra de tablet ou TV"},stars:5,superStars:0},
+    {id:2,name:{en:"Choose dinner",pt:"Escolher o jantar"},emoji:"🍕",desc:{en:"Pick whatever you want for dinner tonight",pt:"Escolhe o que quiseres para o jantar"},stars:8,superStars:0},
+    {id:3,name:{en:"Stay up late",pt:"Ficar acordado mais tarde"},emoji:"🌙",desc:{en:"Stay up 30 minutes past bedtime",pt:"Ficar acordado 30 minutos depois da hora"},stars:10,superStars:0},
+    {id:4,name:{en:"Trip to the park",pt:"Ida ao parque"},emoji:"🌳",desc:{en:"A fun trip to your favourite park",pt:"Uma ida divertida ao teu parque favorito"},stars:15,superStars:0},
   ],
   penalties:[
-    {id:1,name:{en:"Bad behaviour",pt:"Mau comportamento"},stars:2},
-    {id:2,name:{en:"Not listening",pt:"Não ouvir"},stars:3},
-    {id:3,name:{en:"Lying",pt:"Mentir"},stars:5},
+    {id:1,name:{en:"Bad behaviour",pt:"Mau comportamento"},stars:2,superStars:0},
+    {id:2,name:{en:"Not listening",pt:"Não ouvir"},stars:3,superStars:0},
+    {id:3,name:{en:"Lying",pt:"Mentir"},stars:5,superStars:0},
   ],
   goals:[
-    {id:1,name:{en:"Weekly Champion",pt:"Campeão Semanal"},type:"weekly",stars:15,bonus:5,threshold:70,claims:[]},
-    {id:2,name:{en:"Monthly Star",pt:"Estrela do Mês"},type:"monthly",stars:50,bonus:20,threshold:60,claims:[]},
+    {id:1,name:{en:"Weekly Champion",pt:"Campeão Semanal"},type:"weekly",stars:15,bonus:5,superBonus:0,threshold:70,claims:[]},
+    {id:2,name:{en:"Monthly Star",pt:"Estrela do Mês"},type:"monthly",stars:50,bonus:20,superBonus:0,threshold:60,claims:[]},
   ],
-  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",pastDaysLimit:0,historyPageSize:20,streaks:[],goalClaimLog:[],
+  submissions:[],redemptions:[],penaltyLog:[],totalStars:0,totalSuperStars:0,kidPin:"0000",kidName:"",kidEmoji:"👧🏽",pastDaysLimit:0,historyPageSize:20,streaks:[],goalClaimLog:[],
 };
 
 function loadData() {
   try {
     const s = localStorage.getItem(SK);
     const saved = s ? JSON.parse(s) : {};
-    const m = {...DEF,...saved,goals:saved.goals||DEF.goals,penalties:saved.penalties||DEF.penalties,penaltyLog:saved.penaltyLog||[],streaks:saved.streaks||DEF.streaks,goalClaimLog:saved.goalClaimLog||[]};
+    const m = {...DEF,...saved,goals:saved.goals||DEF.goals,penalties:saved.penalties||DEF.penalties,penaltyLog:saved.penaltyLog||[],streaks:saved.streaks||DEF.streaks,goalClaimLog:saved.goalClaimLog||[],totalSuperStars:saved.totalSuperStars??0};
+    m.penalties = m.penalties.map(p=>({superStars:0,...p}));
     m.chores = m.chores.map(c=>({emoji:"🧹",weekdays:[0,1,2,3,4,5,6],desc:"",...c}));
-    m.rewards = m.rewards.map(r=>({emoji:"🎁",desc:"",...r}));
+    m.rewards = m.rewards.map(r=>({emoji:"🎁",desc:"",superStars:0,...r}));
+    m.goals = m.goals.map(g=>({superBonus:0,...g}));
+    m.streaks = m.streaks.map(s=>({...s,steps:(s.steps||[]).map(st=>({superBonus:0,...st}))}));
     return m;
   } catch { return DEF; }
 }
@@ -286,10 +297,10 @@ function makeApi(data, setData) {
     addPenalty:  f  => { const p={id:Date.now(),...f}; commit({...data,penalties:[...data.penalties,p]}); return Promise.resolve(p); },
     updatePenalty:(id,f) => { commit({...data,penalties:data.penalties.map(p=>p.id===id?{...p,...f}:p)}); return Promise.resolve(); },
     deletePenalty:id => { commit({...data,penalties:data.penalties.filter(p=>p.id!==id)}); return Promise.resolve(); },
-    applyPenalty:({penalty_id,penalty_name,stars,note,date}) => {
+    applyPenalty:({penalty_id,penalty_name,stars,superStars,note,date}) => {
       const applied_at = date ? new Date(date+"T12:00:00").toISOString() : new Date().toISOString();
-      const entry = {id:Date.now(),penalty_id,penalty_name,stars,note:note||null,applied_at};
-      commit({...data,penaltyLog:[entry,...data.penaltyLog],totalStars:Math.max(0,data.totalStars-stars)});
+      const entry = {id:Date.now(),penalty_id,penalty_name,stars,superStars:superStars||0,note:note||null,applied_at};
+      commit({...data,penaltyLog:[entry,...data.penaltyLog],totalStars:Math.max(0,data.totalStars-stars),totalSuperStars:Math.max(0,(data.totalSuperStars||0)-(superStars||0))});
       return Promise.resolve(entry);
     },
     reorderChores:(fromIdx,toIdx) => { const arr=[...data.chores];const [item]=arr.splice(fromIdx,1);arr.splice(toIdx,0,item);commit({...data,chores:arr});return Promise.resolve(); },
@@ -301,9 +312,10 @@ function makeApi(data, setData) {
       const goal = data.goals.find(g=>g.id===goalId);
       if(!goal||goal.claims.includes(periodKey)) return Promise.reject(new Error("already claimed"));
       const goals = data.goals.map(g=>g.id===goalId?{...g,claims:[...g.claims,periodKey]}:g);
-      const logEntry={id:Date.now(),goalId,goalName:goal.name,pk:periodKey,bonus:goal.bonus,claimed_at:new Date().toISOString()};
-      commit({...data,goals,goalClaimLog:[...(data.goalClaimLog||[]),logEntry],totalStars:data.totalStars+goal.bonus});
-      return Promise.resolve(goal.bonus);
+      const superBonus = goal.superBonus||0;
+      const logEntry={id:Date.now(),goalId,goalName:goal.name,pk:periodKey,bonus:goal.bonus,superBonus,claimed_at:new Date().toISOString()};
+      commit({...data,goals,goalClaimLog:[...(data.goalClaimLog||[]),logEntry],totalStars:data.totalStars+goal.bonus,totalSuperStars:(data.totalSuperStars||0)+superBonus});
+      return Promise.resolve({bonus:goal.bonus,superBonus});
     },
     submitChore:({chore_id,chore_name,stars,note,date,autoApprove,force}) => {
       const isoDay = date||todayStr();
@@ -325,10 +337,11 @@ function makeApi(data, setData) {
       });
       commit({...data,submissions:subs,totalStars:total}); return Promise.resolve();
     },
-    redeemReward:({reward_id,reward_name,stars}) => {
+    redeemReward:({reward_id,reward_name,stars,superStars}) => {
       if(data.totalStars<stars) return Promise.reject(new Error("not enough"));
-      const r={id:Date.now(),reward_id,reward_name,stars,redeemed_at:new Date().toISOString()};
-      commit({...data,redemptions:[r,...data.redemptions],totalStars:data.totalStars-stars}); return Promise.resolve(r);
+      if((data.totalSuperStars||0)<(superStars||0)) return Promise.reject(new Error("not enough super"));
+      const r={id:Date.now(),reward_id,reward_name,stars,superStars:superStars||0,redeemed_at:new Date().toISOString()};
+      commit({...data,redemptions:[r,...data.redemptions],totalStars:data.totalStars-stars,totalSuperStars:(data.totalSuperStars||0)-(superStars||0)}); return Promise.resolve(r);
     },
     resetStars:() => { commit({...data,totalStars:0}); return Promise.resolve(); },
     verifyPin:  pin => Promise.resolve(pin==="1234"),
@@ -350,24 +363,26 @@ function makeApi(data, setData) {
       if(effective<milestoneDays) return Promise.reject(new Error("not reached"));
       const step=streak.steps.find(s=>s.days===milestoneDays);
       if(!step) return Promise.reject(new Error("step not found"));
-      const claim={milestone_days:milestoneDays,awarded_at:new Date().toISOString(),run_start:raw.startDate};
+      const superBonus=step.superBonus||0;
+      const claim={milestone_days:milestoneDays,awarded_at:new Date().toISOString(),run_start:raw.startDate,bonus:step.bonus,superBonus};
       const streaks=data.streaks.map(s=>s.id===streakId?{...s,claims:[...s.claims,claim]}:s);
-      commit({...data,streaks,totalStars:data.totalStars+step.bonus});
-      return Promise.resolve(step.bonus);
+      commit({...data,streaks,totalStars:data.totalStars+step.bonus,totalSuperStars:(data.totalSuperStars||0)+superBonus});
+      return Promise.resolve({bonus:step.bonus,superBonus});
     },
     processAutoClaims:(pending) => {
       if(!pending.length) return Promise.resolve([]);
       const now=new Date().toISOString();
-      let streaks=[...data.streaks]; let totalBonus=0; const bonuses=[];
+      let streaks=[...data.streaks]; let totalBonus=0; let totalSuperBonus=0; const bonuses=[];
       for(const p of pending){
         const streak=streaks.find(s=>s.id===p.streakId); if(!streak) continue;
         const step=streak.steps.find(s=>s.days===p.milestoneDays); if(!step) continue;
         if(streak.claims.some(c=>c.run_start===p.runStart&&c.milestone_days===p.milestoneDays)) continue;
-        const claim={milestone_days:p.milestoneDays,awarded_at:now,run_start:p.runStart,auto:true};
+        const superBonus=step.superBonus||0;
+        const claim={milestone_days:p.milestoneDays,awarded_at:now,run_start:p.runStart,auto:true,bonus:step.bonus,superBonus};
         streaks=streaks.map(s=>s.id===p.streakId?{...s,claims:[...s.claims,claim]}:s);
-        totalBonus+=step.bonus; bonuses.push(step.bonus);
+        totalBonus+=step.bonus; totalSuperBonus+=superBonus; bonuses.push({bonus:step.bonus,superBonus});
       }
-      commit({...data,streaks,totalStars:data.totalStars+totalBonus});
+      commit({...data,streaks,totalStars:data.totalStars+totalBonus,totalSuperStars:(data.totalSuperStars||0)+totalSuperBonus});
       return Promise.resolve(bonuses);
     },
   };
@@ -467,7 +482,7 @@ function findPendingAutoClaims(streaks,submissions,chores) {
       const highestStep=[...sortedSteps].reverse().find(s=>effectiveAtBreak>=s.days);
       if(!highestStep) continue;
       if(claimedInRun.some(c=>c.milestone_days===highestStep.days)) continue;
-      result.push({streakId:streak.id,milestoneDays:highestStep.days,runStart,bonus:highestStep.bonus,rawCount:rawAtBreak.count});
+      result.push({streakId:streak.id,milestoneDays:highestStep.days,runStart,bonus:highestStep.bonus,superBonus:highestStep.superBonus||0,rawCount:rawAtBreak.count});
     } else {
       // Alive streak: auto-claim when effective streak has reached the max milestone
       if(!current.startDate||!sortedSteps.length) continue;
@@ -478,7 +493,7 @@ function findPendingAutoClaims(streaks,submissions,chores) {
       const maxStep=sortedSteps[sortedSteps.length-1];
       if(effectiveCurrent<maxStep.days) continue;
       if(claimedInRun.some(c=>c.milestone_days===maxStep.days)) continue;
-      result.push({streakId:streak.id,milestoneDays:maxStep.days,runStart,bonus:maxStep.bonus,rawCount:current.count,alive:true});
+      result.push({streakId:streak.id,milestoneDays:maxStep.days,runStart,bonus:maxStep.bonus,superBonus:maxStep.superBonus||0,rawCount:current.count,alive:true});
     }
   }
   return result;
@@ -576,14 +591,25 @@ function WdPicker({value,onChange,t}) {
 // ── ItemForm (chore or reward) ─────────────────────────────────────────────
 function ItemForm({initial,isReward,onSave,onCancel,t}) {
   const lang = useContext(LangCtx);
-  const [f,setF] = useState({name:rn(initial.name,lang)||"",emoji:initial.emoji||(isReward?"🎁":"🧹"),desc:rn(initial.desc,lang)||"",stars:initial.stars||1,weekdays:initial.weekdays||[0,1,2,3,4,5,6]});
+  const [f,setF] = useState({name:rn(initial.name,lang)||"",emoji:initial.emoji||(isReward?"🎁":"🧹"),desc:rn(initial.desc,lang)||"",stars:initial.stars||1,superStars:initial.superStars||0,weekdays:initial.weekdays||[0,1,2,3,4,5,6]});
   const s = (k,v) => setF(p=>({...p,[k]:v}));
   return (
     <div>
       <div style={{display:"flex",gap:8,marginBottom:10}}>
         <input placeholder={isReward?t.rewardEmoji:t.choreEmoji} value={f.emoji} onChange={e=>s("emoji",e.target.value)} style={{...inp,width:56,textAlign:"center",fontSize:22,padding:"6px 4px",flexShrink:0}}/>
         <input placeholder={isReward?t.rewardName:t.choreName} value={f.name} onChange={e=>s("name",e.target.value)} style={{...inp,flex:1}}/>
-        <input type="number" min={1} max={isReward?200:50} value={f.stars} onChange={e=>s("stars",parseInt(e.target.value)||1)} style={{...inp,width:60,flexShrink:0}}/>
+        <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:4}}>
+            <span style={{fontSize:14}}>⭐</span>
+            <input type="number" min={isReward?0:1} max={isReward?200:50} value={f.stars} onChange={e=>s("stars",parseInt(e.target.value)||(isReward?0:1))} style={{...inp,width:56}}/>
+          </div>
+          {isReward&&(
+            <div style={{display:"flex",alignItems:"center",gap:4}}>
+              <span style={{fontSize:14}}>✨</span>
+              <input type="number" min={0} max={50} value={f.superStars} onChange={e=>s("superStars",Math.max(0,parseInt(e.target.value)||0))} style={{...inp,width:56}}/>
+            </div>
+          )}
+        </div>
       </div>
       <input placeholder={isReward?t.rewardDesc:t.choreDesc} value={f.desc} onChange={e=>s("desc",e.target.value)} style={{...inp,marginBottom:10}}/>
       {!isReward&&<div style={{marginBottom:12}}><label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:6}}>{t.choreWeekdays}</label><WdPicker value={f.weekdays} onChange={v=>s("weekdays",v)} t={t}/></div>}
@@ -613,7 +639,7 @@ function buildGraph(subs,reds,plog,streakClaimsFlat,goalClaimLog) {
 function StarsGraph({data}) {
   const t=useLang();
   const [tip,setTip]=useState(null); const [hov,setHov]=useState(null);
-  const streakClaimsFlat=useMemo(()=>{const r=[];(data.streaks||[]).forEach(s=>s.claims.forEach(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);if(step)r.push({...c,bonus:step.bonus});}));return r;},[data.streaks]);
+  const streakClaimsFlat=useMemo(()=>{const r=[];(data.streaks||[]).forEach(s=>s.claims.forEach(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);r.push({...c,bonus:c.bonus??(step?step.bonus:0)});}));return r;},[data.streaks]);
   const gd=useMemo(()=>buildGraph(data.submissions,data.redemptions,data.penaltyLog,streakClaimsFlat,data.goalClaimLog),[data,streakClaimsFlat]);
   const has=gd.some(d=>d.earned>0||d.spent>0||d.penalties>0);
   const W=500,H=200,PL=32,PR=12,PT=14,PB=44,gW=W-PL-PR,gH=H-PT-PB;
@@ -656,7 +682,7 @@ function GoalBanners({goals,submissions,api,refresh}) {
   const ev=useMemo(()=>evalGoals(goals,submissions),[goals,submissions]);
   const vis=ev.filter(g=>(g.alerting||g.complete)&&!dis.includes(g.id+g.pk)&&!g.claimed);
   if(!vis.length&&!flash) return null;
-  const claim=async g=>{try{const b=await api.claimGoalBonus(g.id,g.pk);setDis(d=>[...d,g.id+g.pk]);setFlash(t.goalCompleteMsg(rn(g.name,lang),b));setTimeout(()=>setFlash(null),4000);refresh();}catch{}};
+  const claim=async g=>{try{const{bonus,superBonus}=await api.claimGoalBonus(g.id,g.pk);setDis(d=>[...d,g.id+g.pk]);setFlash(t.goalCompleteMsg(rn(g.name,lang),bonus,superBonus));setTimeout(()=>setFlash(null),4000);refresh();}catch{}};
   return (
     <div style={{marginBottom:12}}>
       {flash&&<div style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#fff",borderRadius:14,padding:"14px 18px",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:28}}>🏆</span><span>{flash}</span></div>}
@@ -670,7 +696,7 @@ function GoalBanners({goals,submissions,api,refresh}) {
               <div style={{fontSize:11,marginTop:4,opacity:.85}}>{g.earned} / {g.stars} ⭐ · {g.pct}%</div>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end",flexShrink:0}}>
-              {ic&&<button style={{...btn("#fff","#d97706"),fontSize:12,padding:"6px 14px"}} onClick={()=>claim(g)}>+{g.bonus} ⭐ Claim!</button>}
+              {ic&&<button style={{...btn("#fff","#d97706"),fontSize:12,padding:"6px 14px"}} onClick={()=>claim(g)}>+{g.bonus} ⭐{(g.superBonus||0)>0?` +${g.superBonus} ✨`:""} Claim!</button>}
               <button onClick={()=>setDis(d=>[...d,g.id+g.pk])} style={{background:"rgba(255,255,255,.2)",border:"none",color:"#fff",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✕</button>
             </div>
           </div>
@@ -691,7 +717,7 @@ function StreakBanners({data,api,refresh}) {
     const pending=findPendingAutoClaims(streaks,submissions,chores);
     if(!pending.length) return;
     api.processAutoClaims(pending).then(bonuses=>{
-      const msgs=pending.map((p,i)=>({n:p.rawCount,bonus:bonuses[i]||p.bonus,alive:p.alive})).filter(m=>m.bonus);
+      const msgs=pending.map((p,i)=>({n:p.rawCount,bonus:bonuses[i]?.bonus||p.bonus,superBonus:bonuses[i]?.superBonus||p.superBonus||0,alive:p.alive})).filter(m=>m.bonus);
       if(msgs.length){setAutoFlashes(msgs);setTimeout(()=>setAutoFlashes([]),6000);}
       refresh();
     }).catch(()=>{});
@@ -704,14 +730,14 @@ function StreakBanners({data,api,refresh}) {
   if(!visible.length&&!autoFlashes.length&&!flash) return null;
 
   const claim=async s=>{
-    try{const bonus=await api.claimStreakMilestone(s.id,s.claimableStep.days,s.startDate);setFlash(t.streakClaimSuccess(bonus));setTimeout(()=>setFlash(null),3000);refresh();}catch{}
+    try{const{bonus,superBonus}=await api.claimStreakMilestone(s.id,s.claimableStep.days,s.startDate);setFlash(t.streakClaimSuccess(bonus,superBonus));setTimeout(()=>setFlash(null),3000);refresh();}catch{}
   };
 
   return(
     <div style={{marginBottom:12}}>
       {autoFlashes.map((f,i)=>(
         <div key={i} style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#fff",borderRadius:14,padding:"14px 18px",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:28}}>{f.alive?"🏆":"🔥"}</span><span>{f.alive?t.streakAutoClaimedMax(f.n,f.bonus):t.streakAutoClaimed(f.n,f.bonus)}</span>
+          <span style={{fontSize:28}}>{f.alive?"🏆":"🔥"}</span><span>{f.alive?t.streakAutoClaimedMax(f.n,f.bonus,f.superBonus):t.streakAutoClaimed(f.n,f.bonus,f.superBonus)}</span>
         </div>
       ))}
       {flash&&<div style={{background:"linear-gradient(135deg,#f59e0b,#d97706)",color:"#fff",borderRadius:14,padding:"14px 18px",marginBottom:10,fontWeight:700,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:28}}>🔥</span><span>{flash}</span></div>}
@@ -740,7 +766,7 @@ function StreakBanners({data,api,refresh}) {
               </div>
               {s.claimableStep&&(
                 <button style={{...btn("#fff","#ea580c"),fontSize:12,padding:"6px 14px",flexShrink:0}} onClick={()=>claim(s)}>
-                  {t.streakMilestoneClaim(s.claimableStep.bonus)}
+                  {t.streakMilestoneClaim(s.claimableStep.bonus,s.claimableStep.superBonus||0)}
                 </button>
               )}
             </div>
@@ -783,14 +809,16 @@ function ChoreModal({chore,date,api,lang,t,onSuccess,onClose}) {
 }
 
 // ── RewardModal ────────────────────────────────────────────────────────────
-function RewardModal({reward,totalStars,t,onConfirm,onClose}) {
+function RewardModal({reward,totalStars,totalSuperStars,t,onConfirm,onClose}) {
+  const ss=reward.superStars||0;
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}}>
       <div style={{...card,width:"min(300px,90vw)",textAlign:"center",marginBottom:0}}>
         <div style={{fontSize:44,marginBottom:8}}>{reward.emoji||"🎁"}</div>
         <h3 style={{margin:"0 0 8px"}}>{t.redeemReward}</h3>
         <p style={{margin:"0 0 4px",fontWeight:600}}>{reward.name}</p>
-        <p style={{margin:"0 0 16px",color:"#f59e0b",fontWeight:700}}>{t.costs} {reward.stars} ⭐ ({t.youHave} {totalStars})</p>
+        <p style={{margin:"0 0 4px",color:"#f59e0b",fontWeight:700}}>{t.costs} {reward.stars} ⭐{ss>0?` + ${ss} ✨`:""}</p>
+        <p style={{margin:"0 0 16px",fontSize:12,color:"#6b7280"}}>{t.youHave} {totalStars} ⭐{ss>0?` / ${totalSuperStars||0} ✨`:""}</p>
         <div style={{display:"flex",gap:8,justifyContent:"center"}}>
           <button style={btn("#10b981")} onClick={onConfirm}>{t.yesRedeem}</button>
           <button style={btn("#9ca3af")} onClick={onClose}>{t.cancel}</button>
@@ -803,7 +831,7 @@ function RewardModal({reward,totalStars,t,onConfirm,onClose}) {
 // ── KidPanel ───────────────────────────────────────────────────────────────
 function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
   const t=useLang(); const lang=useContext(LangCtx);
-  const {chores,rewards,submissions,redemptions,penaltyLog=[],totalStars,goals,pastDaysLimit=0,historyPageSize=20}=data;
+  const {chores,rewards,submissions,redemptions,penaltyLog=[],totalStars,totalSuperStars=0,goals,pastDaysLimit=0,historyPageSize=20}=data;
   const minSubmitDate = pastDaysLimit>0 ? (()=>{const d=new Date();d.setDate(d.getDate()-pastDaysLimit);return d.toISOString().split("T")[0];})() : null;
   const [tabK,setTabK]=useState("chores");
   const [selDate,setSelDate]=useState(()=>{const td=todayStr();return(minSubmitDate&&td<minSubmitDate)?minSubmitDate:td;});
@@ -826,9 +854,9 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
   const choreEmoji=s=>{const c=chores.find(c=>c.id===s.chore_id);return c?c.emoji||"🧹":"🧹";};
   const rewardEmoji=r=>{const rw=rewards.find(rw=>rw.id===r.reward_id);return rw?rw.emoji||"🎁":"🎁";};
 
-  const handleRedeem=async r=>{setRedeemTarget(null);try{await api.redeemReward({reward_id:r.id,reward_name:r.name,stars:r.stars});showFlash(t.redeemSuccess(r.name,r.stars));refresh();}catch{showFlash(t.notEnoughStars,"#ef4444");}};
+  const handleRedeem=async r=>{setRedeemTarget(null);try{await api.redeemReward({reward_id:r.id,reward_name:r.name,stars:r.stars,superStars:r.superStars||0});showFlash(t.redeemSuccess(r.name,r.stars,r.superStars||0));refresh();}catch(e){showFlash(e.message==="not enough super"?t.notEnoughSuperStars:t.notEnoughStars,"#ef4444");}};
 
-  const streakClaimEntries=(data.streaks||[]).flatMap(s=>s.claims.map(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);return{...c,_t:"streak",_d:new Date(c.awarded_at),streakId:s.id,streakName:s.name,bonus:step?step.bonus:0};}));
+  const streakClaimEntries=(data.streaks||[]).flatMap(s=>s.claims.map(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);return{...c,_t:"streak",_d:new Date(c.awarded_at),streakId:s.id,streakName:s.name,bonus:c.bonus??(step?step.bonus:0),superBonus:c.superBonus||0};}));
   const allH=[...submissions.map(s=>({...s,_t:"chore",_d:new Date(s.submitted_at)})),...redemptions.map(r=>({...r,_t:"redemption",_d:new Date(r.redeemed_at)})),...penaltyLog.map(p=>({...p,_t:"penalty",_d:new Date(p.applied_at)})),...streakClaimEntries,...(data.goalClaimLog||[]).map(g=>({...g,_t:"goal",_d:new Date(g.claimed_at)}))].sort((a,b)=>b._d-a._d);
   const hist=allH.filter(x=>{if(ftType==="bonus")return x._t==="streak"||x._t==="goal";if(ftType!=="all"&&x._t!==ftType)return false;if(ftStatus!=="all"){if(x._t!=="chore")return ftStatus==="redeemed";if(x.status!==ftStatus)return false;}return true;});
   const stLabel=s=>t[`status${s[0].toUpperCase()+s.slice(1)}`]||s;
@@ -843,7 +871,7 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
   return (
     <div style={{paddingBottom:isMobileK?74:0}}>
       {choreTarget&&<ChoreModal chore={choreTarget} date={selDate} api={api} lang={lang} t={t} onSuccess={()=>{setChoreTarget(null);showFlash(t.choreSubmitted);refresh();}} onClose={()=>setChoreTarget(null)}/>}
-      {redeemTarget&&<RewardModal reward={redeemTarget} totalStars={totalStars} t={t} onConfirm={()=>handleRedeem(redeemTarget)} onClose={()=>setRedeemTarget(null)}/>}
+      {redeemTarget&&<RewardModal reward={redeemTarget} totalStars={totalStars} totalSuperStars={totalSuperStars} t={t} onConfirm={()=>handleRedeem(redeemTarget)} onClose={()=>setRedeemTarget(null)}/>}
       {showChangePin&&<KidChangePinModal api={api} refresh={refresh} onClose={(msg)=>{setShowChangePin(false);if(msg)showFlash(msg);}}/>}
       {showEditProfile&&<KidProfileModal kidName={data.kidName||""} kidEmoji={data.kidEmoji||"👧🏽"} api={api} refresh={refresh} onClose={(msg)=>{setShowEditProfile(false);if(msg)showFlash(msg);}}/>}
 
@@ -859,9 +887,10 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-            <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.14)",borderRadius:14,padding:"6px 14px"}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:4,background:"rgba(255,255,255,0.14)",borderRadius:14,padding:"6px 14px"}}>
               <span style={{fontSize:18}}>⭐</span>
               <span style={{fontSize:26,fontWeight:900,lineHeight:1}}>{totalStars}</span>
+              {totalSuperStars>0&&<><span style={{fontSize:14,opacity:.7,margin:"0 2px"}}>·</span><span style={{fontSize:18}}>✨</span><span style={{fontSize:22,fontWeight:900,lineHeight:1}}>{totalSuperStars}</span></>}
             </div>
             <button onClick={()=>setShowMenu(m=>!m)} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"7px 11px",cursor:"pointer",color:"#fff",fontSize:18,lineHeight:1}}>☰</button>
           </div>
@@ -879,7 +908,7 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
                   <span style={{fontSize:36}}>{data.kidEmoji||"👧🏽"}</span>
                   <div>
                     <div style={{fontWeight:700,fontSize:16}}>{data.kidName||"Kid"}</div>
-                    <div style={{fontSize:12,opacity:.8}}>{totalStars} ⭐ {t.starsAvailable}</div>
+                    <div style={{fontSize:12,opacity:.8}}>{totalStars} ⭐{totalSuperStars>0?` · ${totalSuperStars} ✨`:""} {t.starsAvailable}</div>
                   </div>
                 </div>
                 <button onClick={()=>setShowMenu(false)} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:8,padding:"5px 9px",cursor:"pointer",color:"#fff",fontSize:14,lineHeight:1}}>✕</button>
@@ -978,7 +1007,7 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
           <h3 style={{margin:"0 0 14px",color:"#374151"}}>{t.availableRewards}</h3>
           {!rewards.length&&<p style={{color:"#9ca3af"}}>{t.noRewards}</p>}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12}}>
-            {rewards.map(r=>{const rName=rn(r.name,lang),rDesc=rn(r.desc,lang),ca=totalStars>=r.stars;return(
+            {rewards.map(r=>{const rName=rn(r.name,lang),rDesc=rn(r.desc,lang),ss=r.superStars||0,starOk=totalStars>=r.stars,superOk=totalSuperStars>=ss,ca=starOk&&superOk;return(
               <div key={r.id} onClick={()=>ca&&setRedeemTarget({...r,name:rName})}
                 style={{background:ca?"#fff":"#f9fafb",border:`2px solid ${ca?"#c7d2fe":"#e5e7eb"}`,borderRadius:18,padding:"18px 12px 14px",textAlign:"center",cursor:ca?"pointer":"default",opacity:ca?1:.55,boxShadow:ca?"0 2px 10px rgba(99,102,241,.10)":"none",transition:"transform .15s,box-shadow .15s",position:"relative"}}
                 onMouseEnter={e=>{if(ca){e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 6px 18px rgba(99,102,241,.18)";}}}
@@ -986,10 +1015,11 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
                 <div style={{fontSize:36,marginBottom:6}}>{r.emoji||"🎁"}</div>
                 <div style={{fontWeight:700,fontSize:14,color:"#111827",marginBottom:4,lineHeight:1.3}}>{rName}</div>
                 {rDesc&&<div style={{fontSize:11,color:"#6b7280",marginBottom:8,lineHeight:1.4}}>{rDesc}</div>}
-                <div style={{display:"inline-flex",alignItems:"center",gap:4,background:ca?"#eef2ff":"#f3f4f6",borderRadius:20,padding:"4px 12px"}}>
+                <div style={{display:"inline-flex",alignItems:"center",gap:4,background:ca?"#eef2ff":"#f3f4f6",borderRadius:20,padding:"4px 12px",flexWrap:"wrap",justifyContent:"center"}}>
                   <StarSvg filled size={14}/><span style={{fontWeight:700,fontSize:13,color:ca?"#6366f1":"#9ca3af"}}>{r.stars}</span>
+                  {ss>0&&<><span style={{fontSize:11,color:ca?"#9333ea":"#9ca3af",marginLeft:2}}>+✨</span><span style={{fontWeight:700,fontSize:13,color:ca?"#9333ea":"#9ca3af"}}>{ss}</span></>}
                 </div>
-                {!ca&&<div style={{position:"absolute",top:8,right:8,background:"#9ca3af",color:"#fff",borderRadius:20,fontSize:10,fontWeight:700,padding:"2px 8px"}}>{t.needMore(r.stars-totalStars)}</div>}
+                {!ca&&(()=>{const ns=!starOk?r.stars-totalStars:0;const nss=!superOk?ss-totalSuperStars:0;return <div style={{position:"absolute",top:8,right:8,background:"#9ca3af",color:"#fff",borderRadius:20,fontSize:10,fontWeight:700,padding:"2px 8px"}}>{ns>0?t.needMore(ns):""}{ns>0&&nss>0?" ":""}{nss>0?t.needMoreSuper(nss):""}</div>;})()}
               </div>
             );})}
           </div>
@@ -1019,7 +1049,7 @@ function KidPanel({data,api,refresh,setLang,onGoAdmin,onLogout}) {
                 {x.note&&<div style={{fontSize:12,color:"#6b7280",fontStyle:"italic"}}>"{x.note}"</div>}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                <span style={{fontWeight:700,fontSize:14,color:col}}>{sign}{stars} ⭐</span>
+                <span style={{fontWeight:700,fontSize:14,color:col}}>{sign}{stars} ⭐{x._t==="redemption"&&(x.superStars||0)>0?` −${x.superStars} ✨`:""}{x._t==="penalty"&&(x.superStars||0)>0?` −${x.superStars} ✨`:""}{(x._t==="streak"||x._t==="goal")&&(x.superBonus||0)>0?` +${x.superBonus} ✨`:""}</span>
                 {x._t==="chore"&&<span style={bdg(sc(x.status))}>{stLabel(x.status)}</span>}
                 {x._t==="penalty"&&<span style={bdg("#ef4444")}>⚠️</span>}
               </div>
@@ -1077,16 +1107,16 @@ function CalendarPopup({value, onChange, max}) {
 function AdminPenalties({data,api,refresh}) {
   const t=useLang(); const lang=useContext(LangCtx);
   const {penalties,penaltyLog=[]}=data;
-  const [newP,setNewP]=useState({name:"",stars:2});
+  const [newP,setNewP]=useState({name:"",stars:2,superStars:0});
   const [editId,setEditId]=useState(null);
-  const [editF,setEditF]=useState({name:"",stars:2});
+  const [editF,setEditF]=useState({name:"",stars:2,superStars:0});
   const [applyF,setApplyF]=useState({penaltyId:"",note:"",date:todayStr()});
   const [applyFlash,setApplyFlash]=useState(null);
   const [applyErr,setApplyErr]=useState(null);
 
-  const handleAdd=async()=>{if(!newP.name.trim())return;await api.addPenalty({name:newP.name,stars:newP.stars});setNewP({name:"",stars:2});refresh();};
-  const startEdit=p=>{setEditId(p.id);setEditF({name:rn(p.name,lang),stars:p.stars});};
-  const handleSave=async()=>{if(!editF.name.trim())return;await api.updatePenalty(editId,{name:editF.name,stars:editF.stars});setEditId(null);refresh();};
+  const handleAdd=async()=>{if(!newP.name.trim())return;await api.addPenalty({name:newP.name,stars:newP.stars,superStars:newP.superStars||0});setNewP({name:"",stars:2,superStars:0});refresh();};
+  const startEdit=p=>{setEditId(p.id);setEditF({name:rn(p.name,lang),stars:p.stars,superStars:p.superStars||0});};
+  const handleSave=async()=>{if(!editF.name.trim())return;await api.updatePenalty(editId,{name:editF.name,stars:editF.stars,superStars:editF.superStars||0});setEditId(null);refresh();};
 
   const handleApply=async()=>{
     setApplyErr(null);
@@ -1094,10 +1124,10 @@ function AdminPenalties({data,api,refresh}) {
     const p=penalties.find(p=>p.id===parseInt(applyF.penaltyId));
     if(!p){setApplyErr("Penalty not found.");return;}
     const pname=rn(p.name,lang);
-    if(!confirm(t.confirmPenalty(pname,p.stars)))return;
+    if(!confirm(t.confirmPenalty(pname,p.stars,p.superStars||0)))return;
     try{
-      await api.applyPenalty({penalty_id:p.id,penalty_name:pname,stars:p.stars,note:applyF.note,date:applyF.date});
-      setApplyFlash(t.penaltyApplied(pname,p.stars));
+      await api.applyPenalty({penalty_id:p.id,penalty_name:pname,stars:p.stars,superStars:p.superStars||0,note:applyF.note,date:applyF.date});
+      setApplyFlash(t.penaltyApplied(pname,p.stars,p.superStars||0));
       setApplyF({penaltyId:"",note:"",date:todayStr()});
       setTimeout(()=>setApplyFlash(null),3000); refresh();
     }catch(e){setApplyErr(String(e));}
@@ -1107,9 +1137,16 @@ function AdminPenalties({data,api,refresh}) {
     <div>
       <div style={card}>
         <h3 style={{margin:"0 0 14px"}}>{t.addNewPenalty}</h3>
-        <div style={{display:"flex",gap:8}}>
-          <input placeholder={t.penaltyName} value={newP.name} onChange={e=>setNewP({...newP,name:e.target.value})} style={{...inp,flex:3}}/>
-          <input type="number" min={1} max={50} value={newP.stars} onChange={e=>setNewP({...newP,stars:parseInt(e.target.value)||1})} style={{...inp,flex:1}}/>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <input placeholder={t.penaltyName} value={newP.name} onChange={e=>setNewP({...newP,name:e.target.value})} style={{...inp,flex:3,minWidth:120}}/>
+          <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+            <span style={{fontSize:14}}>⭐</span>
+            <input type="number" min={0} max={50} value={newP.stars} onChange={e=>setNewP({...newP,stars:Math.max(0,parseInt(e.target.value)||0)})} style={{...inp,width:56}}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+            <span style={{fontSize:14}}>✨</span>
+            <input type="number" min={0} max={50} value={newP.superStars} onChange={e=>setNewP({...newP,superStars:Math.max(0,parseInt(e.target.value)||0)})} style={{...inp,width:56}}/>
+          </div>
           <button style={btn("#ef4444")} onClick={handleAdd}>{t.add}</button>
         </div>
       </div>
@@ -1121,7 +1158,7 @@ function AdminPenalties({data,api,refresh}) {
         {applyErr&&<div style={{background:"#fee2e2",color:"#dc2626",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:13}}>{applyErr}</div>}
         <select value={applyF.penaltyId} onChange={e=>{setApplyErr(null);setApplyF({...applyF,penaltyId:e.target.value});}} style={{...inp,marginBottom:8,background:"#fff"}}>
           <option value="">{t.penaltyPickReason}</option>
-          {penalties.map(p=><option key={p.id} value={String(p.id)}>{rn(p.name,lang)} (−{p.stars} ⭐)</option>)}
+          {penalties.map(p=><option key={p.id} value={String(p.id)}>{rn(p.name,lang)} (−{p.stars} ⭐{(p.superStars||0)>0?` −${p.superStars} ✨`:""})</option>)}
         </select>
         <div style={{marginBottom:8}}>
           <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:4}}>{t.dateLabel}</label>
@@ -1139,13 +1176,20 @@ function AdminPenalties({data,api,refresh}) {
             {editId===p.id?(
               <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
                 <input value={editF.name} onChange={e=>setEditF({...editF,name:e.target.value})} style={{...inp,flex:3,minWidth:120}}/>
-                <input type="number" min={1} max={50} value={editF.stars} onChange={e=>setEditF({...editF,stars:parseInt(e.target.value)||1})} style={{...inp,width:60,flexShrink:0}}/>
+                <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                  <span style={{fontSize:14}}>⭐</span>
+                  <input type="number" min={0} max={50} value={editF.stars} onChange={e=>setEditF({...editF,stars:Math.max(0,parseInt(e.target.value)||0)})} style={{...inp,width:56}}/>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                  <span style={{fontSize:14}}>✨</span>
+                  <input type="number" min={0} max={50} value={editF.superStars} onChange={e=>setEditF({...editF,superStars:Math.max(0,parseInt(e.target.value)||0)})} style={{...inp,width:56}}/>
+                </div>
                 <button style={btn("#10b981")} onClick={handleSave}>{t.saveChore}</button>
                 <button style={btn("#9ca3af")} onClick={()=>setEditId(null)}>{t.cancelEdit}</button>
               </div>
             ):(
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div><span style={{fontWeight:600}}>{rn(p.name,lang)}</span><span style={{marginLeft:10,fontSize:13,color:"#ef4444",fontWeight:700}}>−{p.stars} ⭐</span></div>
+                <div><span style={{fontWeight:600}}>{rn(p.name,lang)}</span><span style={{marginLeft:10,fontSize:13,color:"#ef4444",fontWeight:700}}>−{p.stars} ⭐{(p.superStars||0)>0?` −${p.superStars} ✨`:""}</span></div>
                 <div style={{display:"flex",gap:6}}>
                   <button style={btn("#6366f1")} onClick={()=>startEdit(p)}>✏️</button>
                   <button style={btn("#ef4444")} onClick={async()=>{await api.deletePenalty(p.id);refresh();}}>{t.delete}</button>
@@ -1166,7 +1210,7 @@ function AdminPenalties({data,api,refresh}) {
               <div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(p.applied_at)}</div>
               {p.note&&<div style={{fontSize:12,color:"#6b7280",fontStyle:"italic"}}>"{p.note}"</div>}
             </div>
-            <span style={{color:"#ef4444",fontWeight:700,flexShrink:0}}>−{p.stars} ⭐</span>
+            <span style={{color:"#ef4444",fontWeight:700,flexShrink:0}}>−{p.stars} ⭐{(p.superStars||0)>0?` −${p.superStars} ✨`:""}</span>
           </div>
         ))}
       </div>
@@ -1180,9 +1224,9 @@ function AdminGoals({data,api,refresh}) {
   const {goals,submissions}=data;
   const goalClaimLog=[...(data.goalClaimLog||[])].reverse();
   const fmtPk=pk=>{if(pk.startsWith('w-')){const[,y,m,d]=pk.split('-');return`${t.goalBannerWeekly} ${d}/${parseInt(m)+1}/${y}`;}const[,y,m]=pk.split('-');return`${t.goalBannerMonthly}: ${t.monthNames[parseInt(m)]} ${y}`;};
-  const [ng,setNg]=useState({name:"",type:"weekly",stars:15,bonus:5,threshold:70});
+  const [ng,setNg]=useState({name:"",type:"weekly",stars:15,bonus:5,superBonus:0,threshold:70});
   const [editGoalId,setEditGoalId]=useState(null);
-  const [editGoalForm,setEditGoalForm]=useState({name:"",type:"weekly",stars:15,bonus:5,threshold:70});
+  const [editGoalForm,setEditGoalForm]=useState({name:"",type:"weekly",stars:15,bonus:5,superBonus:0,threshold:70});
   const ev=useMemo(()=>evalGoals(goals,submissions),[goals,submissions]);
   const fld=(label,child,hint)=>(<div style={{marginBottom:10}}><label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:4}}>{label}</label>{child}{hint&&<div style={{fontSize:11,color:"#9ca3af",marginTop:3}}>{hint}</div>}</div>);
   return (
@@ -1191,12 +1235,13 @@ function AdminGoals({data,api,refresh}) {
         <h3 style={{margin:"0 0 14px"}}>{t.addGoal}</h3>
         {fld(t.goalName,<input placeholder={t.goalName} value={ng.name} onChange={e=>setNg({...ng,name:e.target.value})} style={inp}/>)}
         {fld(t.goalType,<select value={ng.type} onChange={e=>setNg({...ng,type:e.target.value})} style={{...inp,background:"#f8fafc"}}><option value="weekly">{t.goalWeekly}</option><option value="monthly">{t.goalMonthly}</option></select>)}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
           {fld(t.goalStars,<input type="number" min={1} value={ng.stars} onChange={e=>setNg({...ng,stars:parseInt(e.target.value)||1})} style={inp}/>)}
           {fld(t.goalBonus,<input type="number" min={0} value={ng.bonus} onChange={e=>setNg({...ng,bonus:parseInt(e.target.value)||0})} style={inp}/>)}
+          {fld(t.superBonusLabel,<input type="number" min={0} value={ng.superBonus} onChange={e=>setNg({...ng,superBonus:Math.max(0,parseInt(e.target.value)||0)})} style={inp}/>)}
           {fld(t.goalThreshold,<input type="number" min={1} max={99} value={ng.threshold} onChange={e=>setNg({...ng,threshold:parseInt(e.target.value)||70})} style={inp}/>,t.goalThresholdHint)}
         </div>
-        <button style={btn()} onClick={async()=>{if(!ng.name.trim())return;await api.addGoal({...ng});setNg({name:"",type:"weekly",stars:15,bonus:5,threshold:70});refresh();}}>{t.addGoal}</button>
+        <button style={btn()} onClick={async()=>{if(!ng.name.trim())return;await api.addGoal({...ng});setNg({name:"",type:"weekly",stars:15,bonus:5,superBonus:0,threshold:70});refresh();}}>{t.addGoal}</button>
       </div>
       <div style={card}>
         <h3 style={{margin:"0 0 14px"}}>{t.goalList}</h3>
@@ -1207,9 +1252,10 @@ function AdminGoals({data,api,refresh}) {
               <div>
                 {fld(t.goalName,<input value={editGoalForm.name} onChange={e=>setEditGoalForm(f=>({...f,name:e.target.value}))} style={inp}/>)}
                 {fld(t.goalType,<select value={editGoalForm.type} onChange={e=>setEditGoalForm(f=>({...f,type:e.target.value}))} style={{...inp,background:"#f8fafc"}}><option value="weekly">{t.goalWeekly}</option><option value="monthly">{t.goalMonthly}</option></select>)}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
                   {fld(t.goalStars,<input type="number" min={1} value={editGoalForm.stars} onChange={e=>setEditGoalForm(f=>({...f,stars:parseInt(e.target.value)||1}))} style={inp}/>)}
                   {fld(t.goalBonus,<input type="number" min={0} value={editGoalForm.bonus} onChange={e=>setEditGoalForm(f=>({...f,bonus:parseInt(e.target.value)||0}))} style={inp}/>)}
+                  {fld(t.superBonusLabel,<input type="number" min={0} value={editGoalForm.superBonus||0} onChange={e=>setEditGoalForm(f=>({...f,superBonus:Math.max(0,parseInt(e.target.value)||0)}))} style={inp}/>)}
                   {fld(t.goalThreshold,<input type="number" min={1} max={99} value={editGoalForm.threshold} onChange={e=>setEditGoalForm(f=>({...f,threshold:parseInt(e.target.value)||70}))} style={inp}/>,t.goalThresholdHint)}
                 </div>
                 <div style={{display:"flex",gap:8,marginTop:4}}>
@@ -1221,12 +1267,12 @@ function AdminGoals({data,api,refresh}) {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:700,color:"#111827",fontSize:15}}>{rn(g.name,lang)}</div>
-                  <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{g.type==="weekly"?t.goalWeekly:t.goalMonthly} · {t.goalStars}: {g.stars} ⭐ · {t.goalBonus}: +{g.bonus} ⭐ · {t.goalThreshold}: {g.threshold}%</div>
+                  <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{g.type==="weekly"?t.goalWeekly:t.goalMonthly} · {t.goalStars}: {g.stars} ⭐ · {t.goalBonus}: +{g.bonus} ⭐{(g.superBonus||0)>0?` +${g.superBonus} ✨`:""} · {t.goalThreshold}: {g.threshold}%</div>
                   <div style={{marginTop:8,background:"#f1f5f9",borderRadius:99,height:8,overflow:"hidden"}}><div style={{width:`${g.pct}%`,background:g.complete?"#10b981":"#6366f1",borderRadius:99,height:"100%",transition:"width .4s"}}/></div>
                   <div style={{fontSize:12,color:"#6b7280",marginTop:4}}>{t.goalProgress(g.earned,g.stars)} · {g.pct}%{g.claimed?" · ✅":""}</div>
                 </div>
                 <div style={{display:"flex",gap:6,flexShrink:0}}>
-                  <button style={btn("#6366f1")} onClick={()=>{setEditGoalId(g.id);setEditGoalForm({name:rn(g.name,lang),type:g.type,stars:g.stars,bonus:g.bonus,threshold:g.threshold});}}>✏️</button>
+                  <button style={btn("#6366f1")} onClick={()=>{setEditGoalId(g.id);setEditGoalForm({name:rn(g.name,lang),type:g.type,stars:g.stars,bonus:g.bonus,superBonus:g.superBonus||0,threshold:g.threshold});}}>✏️</button>
                   <button style={btn("#ef4444")} onClick={async()=>{await api.deleteGoal(g.id);refresh();}}>{t.delete}</button>
                 </div>
               </div>
@@ -1244,7 +1290,7 @@ function AdminGoals({data,api,refresh}) {
               <div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(g.claimed_at)}</div>
               <div style={{fontSize:12,color:"#6b7280"}}>{fmtPk(g.pk)}</div>
             </div>
-            <span style={{fontWeight:700,color:"#f59e0b",flexShrink:0}}>+{g.bonus} ⭐</span>
+            <span style={{fontWeight:700,color:"#f59e0b",flexShrink:0}}>+{g.bonus} ⭐{(g.superBonus||0)>0?` +${g.superBonus} ✨`:""}</span>
           </div>
         ))}
       </div>
@@ -1256,16 +1302,17 @@ function AdminGoals({data,api,refresh}) {
 function AdminStreaks({data,api,refresh}) {
   const t=useLang(); const lang=useContext(LangCtx);
   const{streaks,submissions,chores}=data;
-  const allStreakClaims=useMemo(()=>(streaks||[]).flatMap(s=>{const choreObj=s.type==="task"?chores.find(c=>c.id===s.chore_id):null;return s.claims.map(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);return{...c,streakName:s.name,bonus:step?step.bonus:0,choreObj};});}).sort((a,b)=>new Date(b.awarded_at)-new Date(a.awarded_at)),[streaks,chores]);
+  const allStreakClaims=useMemo(()=>(streaks||[]).flatMap(s=>{const choreObj=s.type==="task"?chores.find(c=>c.id===s.chore_id):null;return s.claims.map(c=>{const step=s.steps.find(st=>st.days===c.milestone_days);return{...c,streakName:s.name,bonus:c.bonus??(step?step.bonus:0),superBonus:c.superBonus||0,choreObj};});}).sort((a,b)=>new Date(b.awarded_at)-new Date(a.awarded_at)),[streaks,chores]);
   const[showForm,setShowForm]=useState(false);
   const[editId,setEditId]=useState(null);
   const[form,setForm]=useState({name:"",type:"general",chore_id:null,steps:[]});
   const ev=useMemo(()=>evalStreaks(streaks,submissions,chores),[streaks,submissions,chores]);
-  const addStep=()=>setForm(f=>({...f,steps:[...f.steps,{days:7,bonus:3}]}));
-  const updStep=(i,k,v)=>setForm(f=>{const steps=[...f.steps];steps[i]={...steps[i],[k]:Math.max(1,parseInt(v)||1)};return{...f,steps};});
+  const addStep=()=>setForm(f=>{const prev=f.steps[f.steps.length-1];const nextDays=prev?prev.days+7:7;return{...f,steps:[...f.steps,{days:nextDays,bonus:3,superBonus:0}]};});
+  const updStep=(i,k,v)=>setForm(f=>{const steps=[...f.steps];const min=k==="days"?(i>0?steps[i-1].days+1:1):0;steps[i]={...steps[i],[k]:Math.max(min,parseInt(v)||0)};return{...f,steps};});
   const rmStep=i=>setForm(f=>({...f,steps:f.steps.filter((_,idx)=>idx!==i)}));
   const handleSave=async()=>{
     if(!form.name.trim()) return;
+    if(form.steps.some(s=>!s.bonus&&!s.superBonus)){alert("Each milestone must award at least ⭐ or ✨.");return;}
     const steps=[...form.steps].sort((a,b)=>a.days-b.days);
     if(editId){await api.updateStreak(editId,{name:form.name,type:form.type,chore_id:form.type==="task"?form.chore_id:null,steps});setEditId(null);}
     else{await api.addStreak({name:form.name,type:form.type,chore_id:form.type==="task"?form.chore_id:null,steps});}
@@ -1302,15 +1349,17 @@ function AdminStreaks({data,api,refresh}) {
             )}
             <div style={{marginBottom:12}}>
               <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:6}}>{t.streakSteps}</label>
-              {form.steps.map((step,i)=>(
-                <div key={i} style={{display:"flex",gap:8,marginBottom:6,alignItems:"center"}}>
-                  <input type="number" min={1} value={step.days} onChange={e=>updStep(i,"days",e.target.value)} style={{...inp,width:65,flexShrink:0}}/>
+              {form.steps.map((step,i)=>{const minDays=i>0?form.steps[i-1].days+1:1;return(
+                <div key={i} style={{display:"flex",gap:6,marginBottom:6,alignItems:"center",flexWrap:"wrap"}}>
+                  <input type="number" min={minDays} value={step.days} onChange={e=>updStep(i,"days",e.target.value)} style={{...inp,width:60,flexShrink:0}}/>
                   <span style={{fontSize:12,color:"#6b7280",whiteSpace:"nowrap"}}>{t.streakDays} →</span>
-                  <input type="number" min={1} value={step.bonus} onChange={e=>updStep(i,"bonus",e.target.value)} style={{...inp,width:65,flexShrink:0}}/>
+                  <input type="number" min={0} value={step.bonus} onChange={e=>updStep(i,"bonus",e.target.value)} style={{...inp,width:55,flexShrink:0}}/>
                   <span style={{fontSize:12,color:"#f97316"}}>⭐</span>
+                  <input type="number" min={0} value={step.superBonus||0} onChange={e=>updStep(i,"superBonus",e.target.value)} style={{...inp,width:55,flexShrink:0}}/>
+                  <span style={{fontSize:12,color:"#9333ea"}}>✨</span>
                   <button style={btn("#ef4444")} onClick={()=>rmStep(i)}>✕</button>
                 </div>
-              ))}
+              );})}
               <button style={{...btn("#6b7280"),fontSize:12,marginTop:4}} onClick={addStep}>{t.addStep}</button>
             </div>
             <div style={{display:"flex",gap:8}}>
@@ -1331,7 +1380,7 @@ function AdminStreaks({data,api,refresh}) {
                 <div style={{flex:1}}>
                   <div style={{fontWeight:700,color:"#111827"}}>🔥 {rn(s.name,lang)}</div>
                   <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{s.type==="general"?t.streakTypeGeneral:t.streakTypeTask}{choreObj&&` · ${rn(choreObj.name,lang)}`}</div>
-                  {s.sortedSteps.length>0&&<div style={{fontSize:12,color:"#f97316",marginTop:4}}>{s.sortedSteps.map(st=>`${st.days}d→${st.bonus}⭐`).join(" · ")}</div>}
+                  {s.sortedSteps.length>0&&<div style={{fontSize:12,color:"#f97316",marginTop:4}}>{s.sortedSteps.map(st=>`${st.days}d→${st.bonus}⭐${(st.superBonus||0)>0?`+${st.superBonus}✨`:""}`).join(" · ")}</div>}
                   {s.alive&&s.effectiveStreak>0&&<div style={{fontSize:12,color:"#10b981",marginTop:2}}>🔥 Current: {s.effectiveStreak} days{s.claimableStep?` · Milestone ready: +${s.claimableStep.bonus}⭐`:""}</div>}
                 </div>
                 <div style={{display:"flex",gap:6,flexShrink:0}}>
@@ -1356,7 +1405,7 @@ function AdminStreaks({data,api,refresh}) {
               <div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(c.awarded_at)}</div>
               <div style={{fontSize:12,color:"#6b7280"}}>{c.milestone_days} {t.streakDays}{c.choreObj&&` · ${rn(c.choreObj.name,lang)}`}</div>
             </div>
-            <span style={{fontWeight:700,color:"#f97316",flexShrink:0}}>+{c.bonus} ⭐</span>
+            <span style={{fontWeight:700,color:"#f97316",flexShrink:0}}>+{c.bonus} ⭐{c.superBonus>0?` +${c.superBonus} ✨`:""}</span>
           </div>
         ))}
       </div>
@@ -1367,7 +1416,7 @@ function AdminStreaks({data,api,refresh}) {
 // ── AdminPanel ─────────────────────────────────────────────────────────────
 function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
   const t=useLang(); const lang=useContext(LangCtx);
-  const {chores,rewards,submissions,redemptions,totalStars,goals,penalties=[],penaltyLog=[],historyPageSize=20}=data;
+  const {chores,rewards,submissions,redemptions,totalStars,totalSuperStars=0,goals,penalties=[],penaltyLog=[],historyPageSize=20}=data;
   const [tabA,setTabA]=useState("approvals");
   const [editChoreId,setEditChoreId]=useState(null);
   const [editRewardId,setEditRewardId]=useState(null);
@@ -1401,7 +1450,7 @@ function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
     setTimeout(()=>setAcFlash(null),2500); refresh();
   };
 
-  const stats=[{l:t.stars,v:totalStars,c:"#6366f1"},{l:t.pendingLabel,v:pending.length,c:"#f59e0b"},{l:t.choresLabel,v:chores.length,c:"#10b981"},{l:t.rewardsLabel,v:rewards.length,c:"#ec4899"},{l:"Goals",v:goals.length,c:"#0ea5e9"},{l:"Penalties",v:penalties.length,c:"#ef4444"}];
+  const stats=[{l:t.stars,v:totalStars,c:"#6366f1"},{l:t.superStarsAvailable,v:totalSuperStars,c:"#9333ea"},{l:t.pendingLabel,v:pending.length,c:"#f59e0b"},{l:t.choresLabel,v:chores.length,c:"#10b981"},{l:t.rewardsLabel,v:rewards.length,c:"#ec4899"},{l:"Penalties",v:penalties.length,c:"#ef4444"}];
 
   const stripEmoji=s=>s.replace(/^\S+\s/,"");
   const navTabs=[["approvals","📋",t.approvals],["redemptions","🎁",t.redemptions],["chores","🧹",t.choresLabel],["rewards","⭐",t.rewardsLabel],["penalties","⚡",stripEmoji(t.tabPenalties)],["goals","🎯",stripEmoji(t.tabGoals)],["streaks","🔥",stripEmoji(t.tabStreaks)],["graph","📊",stripEmoji(t.tabGraph)]];
@@ -1424,7 +1473,7 @@ function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
                   <span style={{fontSize:30}}>🛡️</span>
                   <div>
                     <div style={{fontWeight:700,fontSize:16}}>{t.adminPanel}</div>
-                    <div style={{fontSize:12,opacity:.8}}>{totalStars} ⭐</div>
+                    <div style={{fontSize:12,opacity:.8}}>{totalStars} ⭐{totalSuperStars>0?` · ${totalSuperStars} ✨`:""}</div>
                   </div>
                 </div>
                 <button onClick={()=>setShowMenu(false)} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.22)",borderRadius:8,padding:"5px 9px",cursor:"pointer",color:"#fff",fontSize:14,lineHeight:1}}>✕</button>
@@ -1526,7 +1575,7 @@ function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
         <div style={card}>
           <h3 style={{margin:"0 0 14px"}}>{t.redemptionHistory}</h3>
           {!redemptions.length&&<p style={{color:"#9ca3af"}}>{t.noRedemptions}</p>}
-          {paged.map(r=>(<div key={r.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}><div><div style={{fontWeight:600}}>{r.reward_name}</div><div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(r.redeemed_at)}</div></div><span style={{color:"#ef4444",fontWeight:700}}>−{r.stars} ⭐</span></div>))}
+          {paged.map(r=>(<div key={r.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f3f4f6"}}><div><div style={{fontWeight:600}}>{r.reward_name}</div><div style={{fontSize:12,color:"#9ca3af"}}>{fmtDt(r.redeemed_at)}</div></div><span style={{color:"#ef4444",fontWeight:700}}>−{r.stars} ⭐{(r.superStars||0)>0?` −${r.superStars} ✨`:""}</span></div>))}
           {pages>1&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:12,marginTop:4,borderTop:"1px solid #f3f4f6"}}>
             <button onClick={()=>setRedPage(p=>Math.max(0,p-1))} disabled={redPage===0} style={{...btn("#f1f5f9","#374151"),padding:"5px 14px",fontSize:13,opacity:redPage===0?.4:1}}>←</button>
             <span style={{fontSize:13,color:"#6b7280",fontWeight:600}}>{redPage+1} / {pages}</span>
@@ -1583,7 +1632,7 @@ function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
                       <div style={{flex:1}}>
                         <div style={{fontWeight:700,color:"#111827"}}>{rn(c.name,lang)}</div>
                         {desc&&<div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{desc}</div>}
-                        <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6,flexWrap:"wrap"}}><StarRow count={c.stars}/><span style={{fontSize:12,color:"#6b7280"}}>{c.stars} {t.starsUnit}</span>{allD?<span style={{fontSize:11,color:"#6366f1",fontWeight:600,background:"#eef2ff",borderRadius:12,padding:"1px 8px"}}>All days</span>:wds.map(d=><span key={d} style={{fontSize:11,color:"#6366f1",fontWeight:600,background:"#eef2ff",borderRadius:12,padding:"1px 7px"}}>{t.weekdays[d]}</span>)}</div>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6,flexWrap:"wrap"}}><span style={{fontSize:13,color:"#f59e0b",fontWeight:700}}>⭐ {c.stars}</span>{allD?<span style={{fontSize:11,color:"#6366f1",fontWeight:600,background:"#eef2ff",borderRadius:12,padding:"1px 8px"}}>All days</span>:wds.map(d=><span key={d} style={{fontSize:11,color:"#6366f1",fontWeight:600,background:"#eef2ff",borderRadius:12,padding:"1px 7px"}}>{t.weekdays[d]}</span>)}</div>
                       </div>
                     </div>
                     <div style={{display:"flex",gap:6,flexShrink:0}}>
@@ -1642,7 +1691,7 @@ function AdminPanel({data,api,refresh,onLock,setLang,onGoKid,onLogout}) {
                       <div style={{flex:1}}>
                         <div style={{fontWeight:700,color:"#111827"}}>{rn(r.name,lang)}</div>
                         {desc&&<div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{desc}</div>}
-                        <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}><StarRow count={r.stars}/><span style={{fontSize:12,color:"#6b7280"}}>{r.stars} {t.starsUnit}</span></div>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6,flexWrap:"wrap"}}><span style={{fontSize:13,color:"#f59e0b",fontWeight:700}}>⭐ {r.stars}</span>{(r.superStars||0)>0&&<span style={{fontSize:13,color:"#9333ea",fontWeight:700}}>✨ {r.superStars}</span>}</div>
                       </div>
                     </div>
                     <div style={{display:"flex",gap:6,flexShrink:0}}>
@@ -1942,12 +1991,12 @@ function LangSwitcher({lang,setLang}) {
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
   const [data,setData]=useState(loadData);
-  const [view,setView]=useState("kid");
+  const [view,setView]=useState(()=>localStorage.getItem("chore-stars-admin-auth")==="1"?"admin":"kid");
   const [showPin,setShowPin]=useState(false);
-  const [unlocked,setUnlocked]=useState(false);
+  const [unlocked,setUnlocked]=useState(()=>localStorage.getItem("chore-stars-admin-auth")==="1");
   const [lang,setLang]=useState(()=>localStorage.getItem("chore-stars-lang")||"en");
   const [kidLoggedIn,setKidLoggedIn]=useState(()=>localStorage.getItem("chore-stars-kid-auth")==="1");
-  const [adminDirect,setAdminDirect]=useState(false);
+  const [adminDirect,setAdminDirect]=useState(()=>localStorage.getItem("chore-stars-admin-auth")==="1");
   useEffect(()=>{localStorage.setItem("chore-stars-lang",lang);},[lang]);
   useEffect(()=>{const f=()=>setData(loadData());window.addEventListener("focus",f);return()=>window.removeEventListener("focus",f);},[]);
   const api=makeApi(data,setData);
@@ -1959,7 +2008,7 @@ export default function App() {
         <KidLoginScreen
           api={api}
           onKidSuccess={()=>setKidLoggedIn(true)}
-          onAdminSuccess={()=>{setAdminDirect(true);setUnlocked(true);setView("admin");}}
+          onAdminSuccess={()=>{localStorage.setItem("chore-stars-admin-auth","1");setAdminDirect(true);setUnlocked(true);setView("admin");}}
           lang={lang}
           setLang={setLang}
           kidName={data.kidName||""}
@@ -1971,13 +2020,13 @@ export default function App() {
   return (
     <LangCtx.Provider value={lang}>
       <div style={{minHeight:"100vh",background:"#f8fafc",fontFamily:"'Segoe UI',sans-serif"}}>
-        {showPin&&<PinModal api={api} onSuccess={()=>{setUnlocked(true);setShowPin(false);setView("admin");}} onCancel={()=>setShowPin(false)}/>}
+        {showPin&&<PinModal api={api} onSuccess={()=>{localStorage.setItem("chore-stars-admin-auth","1");setUnlocked(true);setShowPin(false);setView("admin");}} onCancel={()=>setShowPin(false)}/>}
         <div style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
           <div style={{color:"#fff",fontWeight:800,fontSize:"clamp(16px,4vw,22px)",whiteSpace:"nowrap"}}>⭐ {t.appTitle}</div>
         </div>
         <div style={{maxWidth:"100%",padding:"16px"}}>
           <div style={{maxWidth:view==="admin"?960:640,margin:"0 auto"}}>
-            {view==="kid"?<KidPanel data={data} api={api} refresh={refresh} setLang={setLang} onGoAdmin={()=>{if(unlocked)setView("admin");else setShowPin(true);}} onLogout={()=>{localStorage.removeItem("chore-stars-kid-auth");setKidLoggedIn(false);setAdminDirect(false);setUnlocked(false);setView("kid");}}/>:<AdminPanel data={data} api={api} refresh={refresh} onLock={()=>{setUnlocked(false);setAdminDirect(false);setView("kid");}} setLang={setLang} onGoKid={()=>setView("kid")} onLogout={()=>{localStorage.removeItem("chore-stars-kid-auth");setKidLoggedIn(false);setAdminDirect(false);setUnlocked(false);setView("kid");}}/>}
+            {view==="kid"?<KidPanel data={data} api={api} refresh={refresh} setLang={setLang} onGoAdmin={()=>{if(unlocked)setView("admin");else setShowPin(true);}} onLogout={()=>{localStorage.removeItem("chore-stars-kid-auth");setKidLoggedIn(false);setAdminDirect(false);setUnlocked(false);setView("kid");}}/>:<AdminPanel data={data} api={api} refresh={refresh} onLock={()=>{localStorage.removeItem("chore-stars-admin-auth");setUnlocked(false);setAdminDirect(false);setView("kid");}} setLang={setLang} onGoKid={()=>setView("kid")} onLogout={()=>{localStorage.removeItem("chore-stars-admin-auth");localStorage.removeItem("chore-stars-kid-auth");setKidLoggedIn(false);setAdminDirect(false);setUnlocked(false);setView("kid");}}/>}
           </div>
         </div>
       </div>
