@@ -322,8 +322,9 @@ function makeApi(data, setData) {
       if(!force && data.submissions.some(s=>s.chore_id===chore_id&&s.submitted_at.slice(0,10)===isoDay&&s.status!=="rejected"))
         return Promise.reject(new Error("duplicate"));
       const submitted_at = date ? new Date(date+"T12:00:00").toISOString() : new Date().toISOString();
+      const created_at = new Date().toISOString();
       const status = autoApprove?"approved":"pending";
-      const sub = {id:Date.now(),chore_id,chore_name,stars,note:note||null,status,submitted_at};
+      const sub = {id:Date.now(),chore_id,chore_name,stars,note:note||null,status,submitted_at,created_at};
       commit({...data,submissions:[sub,...data.submissions],totalStars:autoApprove?data.totalStars+stars:data.totalStars});
       return Promise.resolve(sub);
     },
@@ -417,14 +418,15 @@ function computeRawStreak(type,choreId,submissions,chores,asOfDate) {
   const maxDate=asOfDate||todayStr();
   const todayISO=maxDate;
   const yesterdayISO=new Date(new Date(maxDate+"T12:00:00").getTime()-86400000).toISOString().slice(0,10);
-  let subs=submissions.filter(s=>s.status==="approved"&&s.submitted_at.slice(0,10)<=maxDate);
+  const streakDate=s=>(s.created_at||s.submitted_at).slice(0,10);
+  let subs=submissions.filter(s=>s.status==="approved"&&streakDate(s)<=maxDate);
   let allowedDays=null;
   if(type==="task"){
     subs=subs.filter(s=>s.chore_id===choreId);
     const chore=chores.find(c=>c.id===choreId);
     allowedDays=chore?(chore.weekdays||[0,1,2,3,4,5,6]):[0,1,2,3,4,5,6];
   }
-  const submittedDates=new Set(subs.map(s=>s.submitted_at.slice(0,10)));
+  const submittedDates=new Set(subs.map(s=>streakDate(s)));
   if(!submittedDates.size) return{count:0,startDate:null,alive:false};
   const lastDate=[...submittedDates].sort().reverse()[0];
   let alive=true;
@@ -470,7 +472,7 @@ function findPendingAutoClaims(streaks,submissions,chores) {
       // Broken streak: auto-claim highest reachable milestone from the last run
       let subs=submissions.filter(s=>s.status==="approved");
       if(streak.type==="task") subs=subs.filter(s=>s.chore_id===streak.chore_id);
-      const dates=[...new Set(subs.map(s=>s.submitted_at.slice(0,10)))].sort().reverse();
+      const dates=[...new Set(subs.map(s=>(s.created_at||s.submitted_at).slice(0,10)))].sort().reverse();
       if(!dates.length) continue;
       const lastDate=dates[0];
       const rawAtBreak=computeRawStreak(streak.type,streak.chore_id,submissions,chores,lastDate);
